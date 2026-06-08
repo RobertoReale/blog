@@ -1,0 +1,31 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  caption: string;
+  size?: 'full' | 'half';
+}
+
+const { src, alt, caption, size = 'full' } = Astro.props;
+---
+
+<figure style={`text-align: center; margin: 32px 0; ${size === 'half' ? 'max-width: 50%; margin-left: auto; margin-right: auto;' : ''}`}>
+  <img
+    src={src}
+    alt={alt}
+    style={`display: block; width: 100%; height: auto;`}
+    class="image-with-caption"
+  />
+  {caption && (
+    <figcaption style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); text-align: center; margin-top: 8px;">
+      {caption}
+    </figcaption>
+  )}
+</figure>
+
+<style>
+  [data-theme="dark"] .image-with-caption {
+    background-color: var(--color-bg);
+    padding: 12px;
+  }
+</style>

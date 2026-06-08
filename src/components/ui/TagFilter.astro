@@ -1,0 +1,278 @@
+---
+interface Props {
+  tags: string[];
+}
+
+const { tags } = Astro.props;
+
+const tagCounts = tags.reduce((acc, tag) => {
+  acc[tag] = (acc[tag] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+
+const uniqueTags = Object.keys(tagCounts).sort((a, b) => {
+  if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
+  return a.localeCompare(b);
+});
+
+const topTags = uniqueTags.slice(0, 5);
+---
+
+<div style="margin-bottom: 40px;">
+  <div style="position: relative; margin-bottom: 16px;">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="17" height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--color-muted);"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+
+    <input
+      type="text"
+      id="article-search"
+      placeholder="Search articles by title or tag…"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Search articles"
+      style="width: 100%; box-sizing: border-box; padding: 11px 40px 11px 42px; border-radius: 8px; border: 1.5px solid var(--color-border); background-color: var(--color-bg); color: var(--color-text); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.15s ease;"
+    />
+
+    <button
+      id="search-clear"
+      aria-label="Clear search"
+      class="search-clear-btn"
+      style="display: none;"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 8px;" role="group" aria-label="Filter by tag">
+    <button data-tag-filter="all" class="tag-pill tag-pill--active" aria-pressed="true">
+      All
+    </button>
+    {topTags.map(tag => (
+      <button data-tag-filter={tag} class="tag-pill" aria-pressed="false">
+        {tag}
+        <span class="tag-pill-count" aria-hidden="true">{tagCounts[tag]}</span>
+      </button>
+    ))}
+  </div>
+</div>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const PAGE_SIZE = 10;
+
+    const searchInput = document.getElementById('article-search') as HTMLInputElement | null;
+    const clearBtn    = document.getElementById('search-clear') as HTMLButtonElement | null;
+    const pills       = document.querySelectorAll<HTMLButtonElement>('.tag-pill');
+    const wrappers    = Array.from(document.querySelectorAll<HTMLElement>('.article-wrapper'));
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const loadMoreBtn       = document.getElementById('load-more-articles-btn');
+    const noResultsMsg      = document.getElementById('no-results-message');
+    const noResultsLabel    = document.getElementById('no-results-label');
+
+    let limit      = PAGE_SIZE;
+    let activeTag  = 'all';
+    let searchText = '';
+
+    const getArticle = (wrapper: HTMLElement) =>
+      wrapper.querySelector<HTMLElement>('article[data-tags]');
+
+    const articleMatches = (wrapper: HTMLElement): boolean => {
+      const el = getArticle(wrapper);
+      if (!el) return true;
+      const title = el.getAttribute('data-title') ?? '';
+      const descr = el.getAttribute('data-description') ?? '';
+      const rawTags = el.getAttribute('data-tags') ?? '';
+      const articleTags = rawTags.split(',').filter(Boolean);
+      const q = searchText.toLowerCase().trim();
+
+      const queryOk = q === '' || title.includes(q) || descr.includes(q) || articleTags.some(t => t.toLowerCase().includes(q));
+      const tagOk   = activeTag === 'all' || articleTags.some(t => t.toLowerCase() === activeTag.toLowerCase());
+      return queryOk && tagOk;
+    };
+
+    const render = () => {
+      const filtering = searchText.trim() !== '' || activeTag !== 'all';
+      let visibleCount = 0;
+
+      wrappers.forEach((wrapper, i) => {
+        const ok = articleMatches(wrapper);
+        const show = ok && (filtering || i < limit);
+        wrapper.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+
+      // Load-more button
+      if (loadMoreContainer) {
+        loadMoreContainer.style.display =
+          !filtering && limit < wrappers.length ? '' : 'none';
+      }
+
+      // Empty state
+      if (noResultsMsg) {
+        const empty = filtering && visibleCount === 0;
+        noResultsMsg.style.display = empty ? '' : 'none';
+        if (noResultsLabel) {
+          noResultsLabel.textContent = searchText.trim() || activeTag;
+        }
+      }
+
+      // Clear button
+      if (clearBtn) {
+        clearBtn.style.display = searchText !== '' ? '' : 'none';
+      }
+
+      // Pill active state
+      pills.forEach(p => {
+        const tag    = p.getAttribute('data-tag-filter') ?? 'all';
+        const active = tag === activeTag;
+        p.classList.toggle('tag-pill--active', active);
+        p.setAttribute('aria-pressed', String(active));
+      });
+    };
+
+    // Init
+    render();
+
+    // Load more
+    loadMoreBtn?.addEventListener('click', () => {
+      limit += PAGE_SIZE;
+      render();
+    });
+
+    // Search input
+    searchInput?.addEventListener('input', () => {
+      searchText = searchInput.value;
+      limit = PAGE_SIZE;
+      render();
+    });
+
+    // Clear button
+    clearBtn?.addEventListener('click', () => {
+      searchText = '';
+      if (searchInput) searchInput.value = '';
+      limit = PAGE_SIZE;
+      render();
+      searchInput?.focus();
+    });
+
+    // Escape key: reset everything
+    searchInput?.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        activeTag  = 'all';
+        searchText = '';
+        if (searchInput) searchInput.value = '';
+        limit = PAGE_SIZE;
+        render();
+        searchInput?.blur();
+      }
+    });
+
+    // Tag pills
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        activeTag  = pill.getAttribute('data-tag-filter') ?? 'all';
+        searchText = '';
+        if (searchInput) searchInput.value = '';
+        limit = PAGE_SIZE;
+        render();
+      });
+    });
+
+    // "Clear filter" link inside no-results message
+    const noResultsClear = document.getElementById('no-results-clear');
+    noResultsClear?.addEventListener('click', () => {
+      activeTag  = 'all';
+      searchText = '';
+      if (searchInput) searchInput.value = '';
+      limit = PAGE_SIZE;
+      render();
+    });
+  });
+</script>
+
+<style>
+  #article-search:focus {
+    border-color: var(--color-accent) !important;
+  }
+
+  .search-clear-btn {
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-muted);
+    padding: 5px;
+    line-height: 0;
+    border-radius: 4px;
+    transition: color 0.12s ease, background-color 0.12s ease;
+  }
+
+  .search-clear-btn:hover {
+    color: var(--color-text);
+    background-color: var(--color-border);
+  }
+
+  /* ─── Tag pills ─── */
+
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    border-radius: 9999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1.5px solid var(--color-border);
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-muted);
+    white-space: nowrap;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .tag-pill:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .tag-pill--active {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .tag-pill--active:hover {
+    color: var(--color-bg);
+    opacity: 0.88;
+  }
+
+  .tag-pill-count {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.65;
+    background: transparent;
+    border-radius: 9999px;
+    min-width: 1ch;
+    text-align: center;
+  }
+</style>

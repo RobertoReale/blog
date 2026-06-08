@@ -1,0 +1,21 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config';
+
+const canonicalURL = `${SITE.url}/404`;
+---
+
+<BaseLayout title="404 — Page Not Found" canonicalURL={canonicalURL}>
+  <div style="text-align: center; padding: 64px 0;">
+    <p style="font-family: 'Lora', serif; font-size: 6rem; font-weight: 700; color: var(--color-muted); margin: 0 0 24px;">
+      404
+    </p>
+    <p style="font-family: 'DM Sans', sans-serif; font-size: 1.1rem; color: var(--color-text); margin: 0 0 32px;">
+      This page doesn't exist.
+    </p>
+    <a href="/" style="font-family: 'DM Sans', sans-serif; font-size: 1rem; color: var(--color-accent); text-decoration: none;">
+      ← Back to home
+    </a>
+  </div>
+</BaseLayout>

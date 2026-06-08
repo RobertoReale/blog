@@ -1,0 +1,75 @@
+---
+import TagPill from './TagPill.astro';
+import { formatDate } from '../../utils/formatDate';
+
+interface RelatedArticle {
+  title: string;
+  slug: string;
+  date: Date;
+  tags: string[];
+  description: string;
+  readingTime: string;
+}
+
+interface Props {
+  articles: RelatedArticle[];
+}
+
+const { articles } = Astro.props;
+---
+
+{articles.length > 0 && (
+  <section aria-label="Related articles">
+    <hr style="margin-top: 48px; margin-bottom: 32px; border: none; border-top: 1px solid var(--color-border);" />
+    <p class="related-label">Related</p>
+    <div class="related-grid">
+      {articles.map(article => (
+        <div>
+          <h3 class="related-title">
+            <a href={`/article/${article.slug}`} class="related-link" style="color: var(--color-text); text-decoration: none;">
+              {article.title}
+            </a>
+          </h3>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;">
+            {article.tags.map(tag => (
+              <TagPill tag={tag} />
+            ))}
+          </div>
+          <div style="font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted);">
+            {formatDate(article.date)} · {article.readingTime}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .related-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 32px;
+  }
+
+  .related-title {
+    font-family: 'Lora', serif;
+    font-size: 16px;
+    font-weight: 400;
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  .related-link:hover {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,214 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Search" description="Search all articles">
+  <h1 style="font-family: 'Lora', serif; font-size: 2rem; line-height: 1.3; margin-bottom: 12px; margin-top: 0;">
+    Search
+  </h1>
+  <p style="font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-muted); margin: 0 0 28px 0;">
+    Full-text search across all articles — finds words anywhere in the content.
+  </p>
+  <input
+    id="search-input"
+    type="search"
+    aria-label="Search articles"
+    placeholder="Search articles…"
+    autofocus
+    autocomplete="off"
+    style="width: 100%; font-family: 'DM Sans', sans-serif; font-size: 18px; border: 1px solid var(--color-border); border-radius: 4px; padding: 12px 16px; background: var(--color-bg); color: var(--color-text); box-sizing: border-box;"
+  />
+  <div id="search-results" style="margin-top: 32px;" aria-live="polite"></div>
+</BaseLayout>
+
+<style is:global>
+  #search-input:focus {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  .search-result {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .search-results-list .search-result:first-child {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .search-result h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    margin: 0 0 6px 0;
+    color: var(--color-text);
+    transition: color 150ms ease;
+  }
+
+  .search-result:hover h2,
+  .search-result.is-focused h2 {
+    color: var(--color-accent);
+  }
+
+  .search-excerpt {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--color-muted);
+    margin: 0 0 6px 0;
+    line-height: 1.6;
+  }
+
+  .search-result mark {
+    background: transparent;
+    color: var(--color-accent);
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .search-result .search-date {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-muted);
+  }
+
+  .search-status,
+  .search-hint {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--color-muted);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .search-hint {
+    text-align: center;
+    padding-top: 8px;
+  }
+
+  .search-nav-hint {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--color-muted);
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.6;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    function escapeHtml(str) {
+      var d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function showHint(container) {
+      container.innerHTML = '<p class="search-hint">Type to search all articles</p>';
+    }
+
+    function renderResults(items, container, query) {
+      if (!items.length) {
+        container.innerHTML = '<p class="search-status">No results for ‘' + escapeHtml(query) + '’.</p>';
+        return;
+      }
+      var html = items.map(function (item, i) {
+        var title = (item.meta && item.meta.title) ? escapeHtml(item.meta.title) : 'Untitled';
+        var date = (item.meta && item.meta.date) ? '<span class="search-date">' + escapeHtml(item.meta.date) + '</span>' : '';
+        // item.excerpt is Pagefind-generated HTML with <mark> tags — safe from our own index
+        var excerpt = item.excerpt
+          ? item.excerpt
+          : (item.meta && item.meta.description ? escapeHtml(item.meta.description) : '');
+        return '<a href="' + item.url + '" id="search-result-' + i + '" class="search-result">' +
+          '<h2>' + title + '</h2>' +
+          (excerpt ? '<p class="search-excerpt">' + excerpt + '</p>' : '') +
+          date +
+          '</a>';
+      }).join('');
+      container.innerHTML =
+        '<div class="search-results-list">' + html + '</div>' +
+        '<p class="search-nav-hint">↑↓ navigate · Enter open · Esc clear</p>';
+    }
+
+    function updateFocus(container, index, input) {
+      var items = container.querySelectorAll('.search-result');
+      items.forEach(function (el, i) {
+        el.classList.toggle('is-focused', i === index);
+      });
+      if (index >= 0 && items[index]) {
+        items[index].scrollIntoView({ block: 'nearest' });
+        input.setAttribute('aria-activedescendant', 'search-result-' + index);
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    async function initSearch() {
+      var input = document.getElementById('search-input');
+      var container = document.getElementById('search-results');
+      if (!input || !container) return;
+
+      showHint(container);
+
+      var pagefind;
+      try {
+        pagefind = await import('/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        container.innerHTML = '<p class="search-status">Search is available in the built site (run <code>npm run build &amp;&amp; npm run preview</code>).</p>';
+        return;
+      }
+
+      var focusedIndex = -1;
+      var currentData = [];
+
+      input.addEventListener('input', async function () {
+        var query = input.value.trim();
+        focusedIndex = -1;
+        input.removeAttribute('aria-activedescendant');
+
+        if (!query) {
+          currentData = [];
+          showHint(container);
+          return;
+        }
+
+        container.innerHTML = '<p class="search-status">Searching…</p>';
+        var search = await pagefind.search(query);
+        currentData = await Promise.all(
+          search.results.slice(0, 10).map(function (r) { return r.data(); })
+        );
+        renderResults(currentData, container, query);
+      });
+
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown') {
+          if (!currentData.length) return;
+          e.preventDefault();
+          focusedIndex = Math.min(focusedIndex + 1, currentData.length - 1);
+          updateFocus(container, focusedIndex, input);
+        } else if (e.key === 'ArrowUp') {
+          if (!currentData.length || focusedIndex < 0) return;
+          e.preventDefault();
+          focusedIndex = focusedIndex - 1;
+          updateFocus(container, focusedIndex, input);
+        } else if (e.key === 'Enter' && focusedIndex >= 0 && currentData[focusedIndex]) {
+          e.preventDefault();
+          window.location.href = currentData[focusedIndex].url;
+        } else if (e.key === 'Escape') {
+          input.value = '';
+          currentData = [];
+          focusedIndex = -1;
+          input.removeAttribute('aria-activedescendant');
+          showHint(container);
+          input.blur();
+        }
+      });
+    }
+
+    initSearch();
+  })();
+</script>

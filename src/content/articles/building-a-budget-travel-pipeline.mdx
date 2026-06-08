@@ -1,0 +1,131 @@
+---
+title: "How I Built a Budget Travel Research Pipeline with Open-Source Tools"
+date: 2026-06-06
+tags: ["open-source", "ai", "mcp", "travel", "automation"]
+description: "How I built a flexible flight + accommodation search pipeline using fli and trvl — without API keys."
+status: "published"
+language: "en"
+series: "budget-travel-pipeline"
+part: 1
+sources:
+  - label: "RobertoReale/fli — fork with --min-duration / --max-duration"
+    href: "https://github.com/RobertoReale/fli"
+  - label: "PR #195 on punitarani/fli — duration-window pull request"
+    href: "https://github.com/punitarani/fli/pull/195"
+  - label: "PR #196 on punitarani/fli — separate return-leg time filter"
+    href: "https://github.com/punitarani/fli/pull/196"
+  - label: "MikkoParkkola/trvl — Go binary, flights + 6 hotel sources"
+    href: "https://github.com/MikkoParkkola/trvl"
+  - label: "pyairbnb on PyPI — Python library for Airbnb search"
+    href: "https://pypi.org/project/pyairbnb/"
+  - label: "heskarioth/py-booking.com — Python scraper for Booking.com"
+    href: "https://github.com/heskarioth/py-booking.com"
+---
+
+## The problem
+
+Google Flights has a flexible dates view, but it only lets you pick fixed duration categories — "weekend," "one week," "two weeks." There's no way to say *minimum 5 days, maximum 7* and get all the cheapest roundtrip combinations across a date window, sorted by price. I wanted exactly that.
+
+There's a second awkwardness: cities with more than one airport. Milan has three (Bergamo BGY, Malpensa MXP, Linate LIN), and the cheapest gateway changes by route and by date. Checking each one by hand is tedious — a pipeline can search all of them and rank the results together.
+
+---
+
+## Finding `fli`
+
+[`fli`](https://github.com/punitarani/fli) is a Python library by Punit Arani that reverse-engineers Google Flights' internal endpoints. Install it with `pip install flights` and you get a CLI (`fli dates`) and a built-in MCP server. `fli dates` returns the cheapest roundtrip combinations in a date window — but had no concept of minimum or maximum stay length.
+
+---
+
+## Building the feature
+
+I forked the repo to [`RobertoReale/fli`](https://github.com/RobertoReale/fli) and implemented `--min-duration` and `--max-duration` flags for `fli dates`, applying the same logic to the MCP `search_dates` tool so an AI agent can call it with duration constraints too.
+
+The changes touched five files — `fli/cli/commands/dates.py`, `fli/mcp/server.py`, two test files, and the README — adding parameter validation and wiring the constraints to filter results outside the duration window. A review pass from a bot called Greptile flagged a missing lower-bound check and an uninitialized variable, which I fixed. The final version went to branch `feature/window-duration` and is open as [PR #195](https://github.com/punitarani/fli/pull/195) upstream.
+
+A second contribution tackled a different limitation. `fli`'s existing `--time` / `departure_window` filter applied the same time-of-day window to *both* legs of a round trip — asking for a morning departure forced a morning return too. I added `--return-time` (`-T`) and the matching `return_departure_window` MCP parameter to decouple them, so you can request a morning outbound and an evening return independently. The core change lives in `fli/core/builders.py`, using a three-state sentinel — inherit the outbound window, drop the return filter entirely, or set an explicit one — wired through the `flights` and `dates` commands and the `search_flights` / `search_dates` / `get_booking_options` MCP tools. It's open separately as [PR #196](https://github.com/punitarani/fli/pull/196). The pipeline below uses the duration work; the return-time filter is there when a specific itinerary needs it.
+
+---
+
+## Using it: The AI agent
+
+With `fli`'s MCP server registered in the AI agent configuration, I used the agent to directly call the search tool — not to write code, but to orchestrate tool calls. This is the prompt that kicked off the first search:
+
+> *My pull request to this fork has added `--min-duration` and `--max-duration` support. Use the fli MCP server to find the cheapest roundtrip flights from Milan:*
+>
+> *— Departure window: July 22 – August 1 (so a 5-night trip returns by August 6)*  
+> *— Stay duration: 5 nights (`--min-duration 5 --max-duration 5`; set different values for a range)*  
+> *— Departure airports: MXP (Malpensa), BGY (Bergamo), LIN (Linate) — search each separately*  
+> *— Destinations: Naples, Barcelona, Corfu, Brindisi (Salento), Split*  
+> *— Only include departures before 4 PM*  
+> *— Sort by cheapest roundtrip price*  
+> *— At the end, suggest other destinations to check in the future*
+
+The agent runs a `fli dates` command for every origin–destination pair, collects the JSON output, and returns a ranked table with prices, optimal dates, and direct Google Flights booking links. The window is for *departures* — with a 5-night stay, the latest July-22-to-August-1 departure returns by August 6. The cheapest results from an actual run of this search:
+
+| # | Route | Roundtrip price | Depart → Return | Nights |
+|---|-------|-----------------|------------------|--------|
+| 1 | BGY → Barcelona | €46 | Jul 25 → Jul 30 | 5 |
+| 2 | BGY → Naples | €47 | Jul 30 → Aug 4 | 5 |
+| 3 | MXP → Naples | €47 | Jul 29 → Aug 3 | 5 |
+| 4 | MXP → Barcelona | €49 | Aug 1 → Aug 6 | 5 |
+| 5 | MXP → Corfu | €52 | Jul 26 → Jul 31 | 5 |
+
+Two things to read correctly. **The price is the full roundtrip fare, not one leg** — €46 covers BGY→Barcelona *and* Barcelona→BGY, and the booking link opens that roundtrip. And it's the fare for a **single adult**: `fli` doesn't take a passenger count, so for two travellers you double it. Searching all three Milan airports is what surfaces the cheap gateways — here Bergamo and Malpensa take every top slot, while Linate (the legacy city airport, no low-cost carriers) came back two to three times more expensive on the same routes and never made the cut. Note also that every option departs from and returns to the *same* airport: `fli` models a roundtrip as one airport pair, so it can't build an open-jaw (out of Bergamo, back into Malpensa) — searching each airport just tells you which single gateway is cheapest.
+
+---
+
+## Expanding and exporting
+
+I then asked the agent to broaden the search and export everything:
+
+> *Run the same search for all the future destinations you suggested. Then export everything to my desktop as a complete structured file — full ranking with dates, prices, and booking links.*
+
+The agent widens the destination set, re-runs the per-route searches, and exports two files: a complete planning document (every route with per-route date breakdowns, prices, and booking links) and — at my explicit request — a technical reference guide summarizing the tool's command syntax and flags. The reference file gives the agent a ready cheat-sheet, so future searches don't need to re-derive how the tool works. Both are just the structured output of the same two-step loop: ask `fli` for ranked dates, have the agent collect and format them.
+
+---
+
+## Extending to accommodation: `trvl`
+
+Flights are half the equation. I went looking for an accommodation equivalent and chose [`MikkoParkkola/trvl`](https://github.com/MikkoParkkola/trvl): a single Go binary that searches six accommodation sources at once — Google Hotels, Trivago, Airbnb, Booking.com, Hostelworld, HomeToGo — with no API keys. Same philosophy as `fli`, structured platform data callable by an agent, but it competes across the whole market instead of a single platform. (Airbnb-only MCP servers exist; for budget search, pricing one platform leaves too much on the table — a Booking.com hotel or a Hostelworld room often undercuts the cheapest Airbnb.)
+
+Configuration adds it alongside `fli`:
+
+```json
+{
+  "mcpServers": {
+    "fli": { "command": "fli-mcp" },
+    "trvl": { "command": "trvl", "args": ["mcp"] }
+  }
+}
+```
+
+With both `fli` and `trvl` configured as MCP servers, the agent can call them together without any custom glue code. The prompt:
+
+> *Using both fli and trvl: for each of the top flight options, search accommodation for 2 people, maximum €150 per night. Give me a final ranking by total vacation cost — flight plus accommodation — with booking links for both.*
+
+The agent handles the rest: calling both servers, combining the outputs, returning a report ranked by total trip cost.
+
+One caveat that turns out to matter a lot: the accommodation prices `trvl` returns for free are Google Hotels *teaser* rates, not bookable quotes — and they can be wildly optimistic (in testing, a hotel shown at €46/night was actually €269 at checkout). Part 2 covers how to get verified, bookable prices instead. Treat the numbers from this raw version as a first pass, not a booking decision.
+
+```
+Step 1 — fli MCP
+  search_dates(origin=BGY, dest=NAP, from=Jul22, to=Aug1, min=5, max=5)
+  → ranked date combinations with roundtrip flight prices
+
+Step 2 — trvl MCP
+  search across 6 sources (location=Ischia, checkin=Jul30, checkout=Aug4, guests=2)
+  → listings with nightly prices and total stay cost
+
+Step 3 — Agent
+  → report ranked by total vacation cost (flight + accommodation)
+```
+
+---
+
+
+
+## Caveats
+
+All of these tools reverse-engineer internal endpoints that can change without notice. Using them sits in a legal grey area — most platforms prohibit automated access in their ToS. Use them for personal research. On Windows, `fli` requires `PYTHONIOENCODING=utf-8` and `--format json` to avoid encoding errors.
+
+One more thing worth noting: LLMs are non-deterministic. If you run the same agent prompt, the model may structure its tool calls differently, query a different subset of destinations, or occasionally skip a route. The prompts here worked well in testing, but expect to iterate — small adjustments in wording can meaningfully change how the model orchestrates the search.

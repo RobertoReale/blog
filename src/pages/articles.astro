@@ -1,0 +1,75 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ui/ArticleCard.astro';
+import TagFilter from '../components/ui/TagFilter.astro';
+import { getCollection } from 'astro:content';
+import { getReadingTime } from '../utils/readingTime';
+import { SITE } from '../config';
+
+const allArticles = await getCollection('articles', ({ data }) => data.status === 'published');
+const sorted = allArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const allTags = sorted.flatMap(a => a.data.tags);
+const canonicalURL = `${SITE.url}${Astro.url.pathname}`;
+---
+
+<BaseLayout title="Articles" canonicalURL={canonicalURL}>
+  <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 40px; margin-top: 0;">
+    Articles
+  </h1>
+
+  <TagFilter tags={allTags} />
+
+  <div id="articles-container">
+    {sorted.length === 0 ? (
+      <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); text-align: center; padding: 48px 0; border: 1px dashed var(--color-border); border-radius: 8px;">
+        No articles published yet.
+      </p>
+    ) : sorted.map((article, index) => (
+      <div class="article-wrapper" data-index={index}>
+        <ArticleCard
+          title={article.data.title}
+          description={article.data.description}
+          date={article.data.date}
+          slug={article.slug}
+          tags={article.data.tags}
+          readingTime={getReadingTime(article.body)}
+          series={article.data.series}
+          part={article.data.part}
+        />
+      </div>
+    ))}
+  </div>
+
+  <div id="no-results-message" style="display: none; text-align: center; padding: 48px 0; font-family: 'DM Sans', sans-serif; color: var(--color-muted);">
+    <p style="margin: 0 0 12px 0; font-size: 1rem;">
+      No articles found for "<span id="no-results-label" style="font-style: italic;"></span>"
+    </p>
+    <button
+      id="no-results-clear"
+      style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-accent); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0;"
+    >
+      Clear filter
+    </button>
+  </div>
+
+  {sorted.length > 10 && (
+    <div style="text-align: center; margin-top: 20px; margin-bottom: 40px;" id="load-more-container">
+      <button
+        id="load-more-articles-btn"
+        style="padding: 10px 24px; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; border: 1px solid var(--color-border); cursor: pointer; background-color: transparent; color: var(--color-text); transition: border-color 0.15s ease, color 0.15s ease;"
+        class="load-more-btn"
+      >
+        Load more articles
+      </button>
+    </div>
+  )}
+</BaseLayout>
+
+<style>
+  .load-more-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+</style>

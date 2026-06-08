@@ -1,0 +1,33 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config';
+
+const canonicalURL = `${SITE.url}${Astro.url.pathname}`;
+---
+
+<BaseLayout title="Now" canonicalURL={canonicalURL}>
+  <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
+    Now
+  </h1>
+  <p style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); margin-bottom: 40px;">
+    Last updated: June 5, 2026
+  </p>
+
+  <div class="prose">
+    <h2>Exploring</h2>
+    <p>
+      Thinking about how mental models form and how to build better ones.
+      Currently reading about epistemology and systems thinking.
+    </p>
+    <h2>Reading</h2>
+    <p>
+      Working through a mix of philosophy, science writing, and the occasional novel.
+    </p>
+    <h2>Thinking about</h2>
+    <p>
+      The gap between how we think we think and how we actually think.
+      What it means to have a genuine opinion about something.
+    </p>
+  </div>
+</BaseLayout>

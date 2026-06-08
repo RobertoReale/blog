@@ -1,0 +1,66 @@
+---
+export const prerender = true;
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { slugify } from '../../utils/slugify';
+import { SITE } from '../../config';
+
+const allArticles = await getCollection('articles', ({ data }) => data.status === 'published');
+
+const seriesMap = new Map<string, { name: string; count: number }>();
+for (const article of allArticles) {
+  if (article.data.series) {
+    const slug = slugify(article.data.series);
+    const existing = seriesMap.get(slug);
+    if (existing) {
+      existing.count++;
+    } else {
+      seriesMap.set(slug, { name: article.data.series, count: 1 });
+    }
+  }
+}
+
+const series = Array.from(seriesMap.entries())
+  .map(([slug, { name, count }]) => ({ slug, name, count }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const canonicalURL = `${SITE.url}/series`;
+---
+
+<BaseLayout title="Series" canonicalURL={canonicalURL}>
+  <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 12px; margin-top: 0;">
+    Series
+  </h1>
+  <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 1rem; margin-bottom: 48px;">
+    Multi-part articles grouped by topic.
+  </p>
+
+  {series.length === 0 ? (
+    <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); text-align: center; padding: 48px 0; border: 1px dashed var(--color-border); border-radius: 8px;">
+      No series yet.
+    </p>
+  ) : (
+    <div>
+      {series.map(s => (
+        <a
+          href={`/series/${s.slug}`}
+          style="display: block; text-decoration: none; padding: 24px 0; border-bottom: 1px solid var(--color-border);"
+          class="series-row"
+        >
+          <h2 style="font-family: 'Lora', serif; font-size: 1.25rem; margin: 0 0 6px 0; color: var(--color-text);">
+            {s.name}
+          </h2>
+          <span style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted);">
+            {s.count} {s.count === 1 ? 'article' : 'articles'}
+          </span>
+        </a>
+      ))}
+    </div>
+  )}
+</BaseLayout>
+
+<style>
+  .series-row:hover h2 {
+    text-decoration: underline;
+  }
+</style>

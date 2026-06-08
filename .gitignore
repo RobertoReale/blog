@@ -1,0 +1,40 @@
+# Dipendenze
+node_modules/
+
+# Build output
+dist/
+.astro/
+.vercel/
+
+# Variabili d'ambiente (MAI pubblicare su GitHub)
+.env
+.env.local
+.env.*.local
+
+# Test
+test-results/
+playwright-report/
+.playwright/
+
+# Log della pipeline di build
+logs/
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS
+.DS_Store
+Thumbs.db
+
+# File della pipeline di build automatica (opzionale: rimuovi queste righe
+# se vuoi tenere i prompt nel repo come documentazione)
+SETUP.md
+run.ps1
+check_syntax.ps1
+check_encoding.ps1
+prompt_blog_*.txt

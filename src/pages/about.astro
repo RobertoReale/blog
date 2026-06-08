@@ -1,0 +1,39 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config';
+
+const canonicalURL = `${SITE.url}${Astro.url.pathname}`;
+---
+
+<BaseLayout title="About" canonicalURL={canonicalURL}>
+  <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 32px; margin-top: 0;">
+    About
+  </h1>
+
+  <div class="prose">
+    <p>
+      I write to understand things, not to explain things I already understand.
+      Most posts start from a question I couldn't answer cleanly — and work through
+      it in public, without pretending to have arrived at a final answer.
+    </p>
+    <h2>What this is</h2>
+    <p>
+      Rob's Blog is built around two ideas: first principles and critical thinking.
+      First principles means stripping a problem down to what you actually know,
+      rather than inheriting someone else's framing. Critical thinking means
+      treating your own conclusions with the same skepticism you'd apply to anyone else's.
+    </p>
+    <h2>The format</h2>
+    <p>
+      Posts are Q&A-driven. Instead of essay prose, I break each piece into the
+      questions that actually structure the thinking — the ones worth asking before
+      reaching for an answer.
+    </p>
+    <h2>Who I am</h2>
+    <p>
+      Roberto Reale. Curious about how things work, why people believe what they
+      believe, and whether any of it holds up when you push on it.
+    </p>
+  </div>
+</BaseLayout>

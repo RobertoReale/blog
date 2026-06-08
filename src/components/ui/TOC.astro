@@ -1,0 +1,58 @@
+---
+---
+<div id="toc-container"></div>
+<script>
+  document.addEventListener('astro:page-load', () => {
+    function escapeHtml(s: string) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function initTOC() {
+      var headings = Array.from(document.querySelectorAll('article[data-pagefind-body] h2, article[data-pagefind-body] h3'));
+      var container = document.getElementById('toc-container');
+      if (!container) return;
+      if (headings.length < 3) {
+        container.style.display = 'none';
+        return;
+      }
+
+      var isDesktop = window.matchMedia('(min-width: 640px)').matches;
+      var openAttr = isDesktop ? ' open' : '';
+
+      var listItems = headings.map(function (el) {
+        var text = el.textContent || '';
+        var id = el.id;
+        if (!id) {
+          id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          el.id = id;
+        }
+        var indent = el.tagName === 'H3' ? 'style="margin-left: 12px;"' : '';
+        return '<li ' + indent + '><a href="#' + escapeHtml(id) + '">' + escapeHtml(text) + '</a></li>';
+      }).join('');
+
+      container.innerHTML =
+        '<details' + openAttr + '>' +
+          '<summary><span class="toc-label">Contents</span></summary>' +
+          '<ul class="toc-list">' + listItems + '</ul>' +
+        '</details>';
+
+      if ('IntersectionObserver' in window) {
+        var links = container.querySelectorAll('a');
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              links.forEach(function (link) { link.classList.remove('toc-active'); });
+              if (container) {
+                var activeLink = container.querySelector('a[href="#' + escapeHtml(entry.target.id) + '"]');
+                if (activeLink) activeLink.classList.add('toc-active');
+              }
+            }
+          });
+        }, { rootMargin: '0px 0px -60% 0px', threshold: 0 });
+        headings.forEach(function (el) { observer.observe(el); });
+      }
+    }
+
+    initTOC();
+  });
+</script>

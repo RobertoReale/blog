@@ -1,0 +1,46 @@
+---
+interface Props {
+  tag: string;
+  href?: string;
+  active?: boolean;
+}
+
+const { tag, href, active = false } = Astro.props;
+const cls = active ? 'tag-pill tag-pill--active' : 'tag-pill';
+---
+
+{href ? (
+  <a href={href} data-tag-pill data-tag={tag} class={cls}>
+    {tag}
+  </a>
+) : (
+  <span data-tag-pill data-tag={tag} class={cls}>
+    {tag}
+  </span>
+)}
+
+<style>
+  .tag-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    background-color: var(--color-border);
+    color: var(--color-muted);
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  a.tag-pill:hover {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+    text-decoration: none;
+  }
+
+  .tag-pill--active {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+</style>

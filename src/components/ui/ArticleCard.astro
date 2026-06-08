@@ -1,0 +1,63 @@
+---
+import TagPill from './TagPill.astro';
+import { formatDate } from '../../utils/formatDate';
+import { slugify } from '../../utils/slugify';
+
+interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  slug: string;
+  tags: string[];
+  readingTime: string;
+  series?: string;
+  part?: number;
+}
+
+const { title, description, date, slug, tags, readingTime, series, part } = Astro.props;
+---
+
+<article
+  data-article-card
+  data-tags={tags.join(',')}
+  data-title={title.toLowerCase()}
+  data-description={description.toLowerCase()}
+  style="margin-bottom: 48px;"
+>
+  <h2 style="font-family: 'Lora', serif; font-size: 1.35rem; margin-bottom: 8px; margin-top: 0;">
+    <a
+      href={`/article/${slug}`}
+      style="color: var(--color-text); text-decoration: none;"
+      class="article-title-link"
+    >
+      {title}
+    </a>
+  </h2>
+  <p style="color: var(--color-muted); font-family: 'DM Sans', sans-serif; font-size: 1rem; margin: 0 0 12px 0;">
+    {description}
+  </p>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+    <span style="color: var(--color-muted); font-family: 'DM Sans', sans-serif; font-size: 14px;">
+      {formatDate(date)}
+    </span>
+    <span style="color: var(--color-muted); font-size: 14px;">·</span>
+    <span style="color: var(--color-muted); font-family: 'DM Sans', sans-serif; font-size: 14px;">
+      {readingTime}
+    </span>
+    {tags.map(tag => (
+      <TagPill tag={tag} href={`/tag/${tag}`} />
+    ))}
+  </div>
+  {series && part && (
+    <div style="font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--color-muted); margin-top: 8px;">
+      Part {part} ·{' '}
+      <a href={`/series/${slugify(series)}`} style="color: var(--color-muted); text-decoration: underline;">{series}</a>
+    </div>
+  )}
+</article>
+
+<style>
+  .article-title-link:hover {
+    text-decoration: underline;
+  }
+</style>

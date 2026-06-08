@@ -1,0 +1,122 @@
+---
+
+
+interface Part {
+  part: number;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published';
+}
+
+interface Props {
+  series: string;
+  seriesSlug: string;
+  currentPart: number;
+  allParts: Part[];
+}
+
+const { series, seriesSlug, currentPart, allParts } = Astro.props;
+const totalParts = allParts.length;
+
+const currentIndex = allParts.findIndex(p => p.part === currentPart);
+const prevPart = currentIndex > 0 ? allParts[currentIndex - 1] : null;
+const nextPart = currentIndex < allParts.length - 1 ? allParts[currentIndex + 1] : null;
+---
+
+<nav
+  aria-label={`Series: ${series}`}
+  style="border-left: 3px solid var(--color-border); padding: 16px 20px; margin-bottom: 32px;"
+>
+  <div style="font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted); margin-bottom: 4px;">
+    Series ·{' '}
+    <a href={`/series/${seriesSlug}`} class="series-title-link" style="color: var(--color-muted); text-decoration: none;">
+      {series}
+    </a>
+  </div>
+  <div style="font-family: 'Lora', serif; font-size: 1.1rem; color: var(--color-text); margin-bottom: 16px;">
+    Part {currentPart} of {totalParts}
+  </div>
+
+  {allParts.length > 5 ? (
+    <details style="margin-bottom: 16px;">
+      <summary style="cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); margin-bottom: 12px; outline: none; user-select: none;">
+        Show all {totalParts} parts
+      </summary>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px;">
+        {allParts.map(p => {
+          const isCurrent = p.part === currentPart;
+          const isDraft = p.status === 'draft';
+          return (
+            <li style="font-family: 'DM Sans', sans-serif; font-size: 15px;">
+              {isCurrent ? (
+                <span style="color: var(--color-accent); cursor: default;">
+                  Part {p.part} — {p.title}
+                </span>
+              ) : isDraft ? (
+                <span style="color: var(--color-muted);">
+                  Part {p.part} — {p.title} <em>(coming soon)</em>
+                </span>
+              ) : (
+                <a href={`/article/${p.slug}`} class="series-part-link" style="color: var(--color-muted); text-decoration: none;">
+                  Part {p.part} — {p.title}
+                </a>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </details>
+  ) : (
+    <ol style="list-style: none; margin: 0 0 16px 0; padding: 0; display: flex; flex-direction: column; gap: 6px;">
+      {allParts.map(p => {
+        const isCurrent = p.part === currentPart;
+        const isDraft = p.status === 'draft';
+        return (
+          <li style="font-family: 'DM Sans', sans-serif; font-size: 15px;">
+            {isCurrent ? (
+              <span style="color: var(--color-accent); cursor: default;">
+                Part {p.part} — {p.title}
+              </span>
+            ) : isDraft ? (
+              <span style="color: var(--color-muted);">
+                Part {p.part} — {p.title} <em>(coming soon)</em>
+              </span>
+            ) : (
+              <a href={`/article/${p.slug}`} class="series-part-link" style="color: var(--color-muted); text-decoration: none;">
+                Part {p.part} — {p.title}
+              </a>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  )}
+
+  {(prevPart || nextPart) && (
+    <div style="display: flex; gap: 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; flex-wrap: wrap;">
+      {prevPart && prevPart.status === 'published' && (
+        <a href={`/article/${prevPart.slug}`} class="series-nav-link" style="color: var(--color-muted); text-decoration: none;">
+          ← Part {prevPart.part}: {prevPart.title}
+        </a>
+      )}
+      {nextPart && nextPart.status === 'published' && (
+        <a href={`/article/${nextPart.slug}`} class="series-nav-link" style="color: var(--color-muted); text-decoration: none; margin-left: auto;">
+          Part {nextPart.part}: {nextPart.title} →
+        </a>
+      )}
+    </div>
+  )}
+</nav>
+
+<style>
+  .series-title-link:hover {
+    text-decoration: underline;
+  }
+  .series-part-link:hover {
+    text-decoration: underline;
+    color: var(--color-text) !important;
+  }
+  .series-nav-link:hover {
+    color: var(--color-text) !important;
+  }
+</style>

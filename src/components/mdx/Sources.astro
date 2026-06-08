@@ -1,0 +1,37 @@
+---
+interface Source {
+  label: string;
+  href: string;
+}
+
+interface Props {
+  sources?: Source[];
+}
+
+const { sources = [] } = Astro.props;
+
+function isUrl(str: string): boolean {
+  return str.startsWith('http://') || str.startsWith('https://');
+}
+---
+
+{sources.length > 0 && (
+  <div style="margin-top: 48px;">
+    <p style="font-family: 'DM Sans', sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted); font-weight: 500; margin-bottom: 12px;">
+      Sources
+    </p>
+    <ol style="font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-text); padding-left: 20px; margin: 0;">
+      {sources.map(source => (
+        <li style="margin-bottom: 6px;">
+          {isUrl(source.href) ? (
+            <a href={source.href} target="_blank" rel="noopener noreferrer" style="color: var(--color-accent);">
+              {source.label}
+            </a>
+          ) : (
+            <span>{source.label}</span>
+          )}
+        </li>
+      ))}
+    </ol>
+  </div>
+)}

@@ -1,0 +1,60 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { SITE } from '../config';
+
+interface Props {
+  title: string;
+  description: string;
+  slug: string;
+  date: Date;
+  coverImage?: string;
+  lang?: string;
+}
+
+const { title, description, slug, date, coverImage, lang = 'en' } = Astro.props;
+const canonicalURL = `${SITE.url}/article/${slug}`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description: description,
+  datePublished: date.toISOString(),
+  author: { '@type': 'Person', name: SITE.author },
+  url: canonicalURL,
+  publisher: { '@type': 'Person', name: SITE.author },
+  ...(coverImage ? { image: `${SITE.url}${coverImage}` } : {}),
+};
+---
+
+<BaseLayout title={title} description={description} lang={lang} canonicalURL={canonicalURL}>
+  <Fragment slot="head">
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta name="twitter:card" content={coverImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {coverImage && (
+      <meta property="og:image" content={`${SITE.url}${coverImage}`} />
+    )}
+    {coverImage && (
+      <meta name="twitter:image" content={`${SITE.url}${coverImage}`} />
+    )}
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </Fragment>
+  <div id="progress-bar"></div>
+  <script is:inline>
+    (function () {
+      var bar = document.getElementById('progress-bar');
+      if (!bar) return;
+      window.addEventListener('scroll', function () {
+        var total = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = total > 0 ? (window.scrollY / total * 100) + '%' : '0%';
+      }, { passive: true });
+    })();
+  </script>
+  <slot />
+</BaseLayout>

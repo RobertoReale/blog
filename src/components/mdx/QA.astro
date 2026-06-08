@@ -1,0 +1,23 @@
+---
+import { slugify } from '../../utils/slugify';
+
+interface Props {
+  question: string;
+}
+
+const { question } = Astro.props;
+const questionSlug = slugify(question);
+---
+
+<div
+  id={`qa-${questionSlug}`}
+  data-qa-question={question}
+  style="margin-bottom: 48px;"
+>
+  <h2 style="font-family: 'Lora', serif; font-size: 1.15em; color: var(--color-accent); border-left: 3px solid var(--color-accent); padding-left: 16px; margin: 0 0 12px 0; font-weight: 600;">
+    {question}
+  </h2>
+  <div style="font-family: 'DM Sans', sans-serif;">
+    <slot />
+  </div>
+</div>

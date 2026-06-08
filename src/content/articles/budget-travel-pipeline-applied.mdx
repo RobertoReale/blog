@@ -1,0 +1,369 @@
+---
+title: "Running the Budget Travel Pipeline: Setup, the Prompt, and What I Skipped"
+date: 2026-06-06
+tags: ["open-source", "ai", "mcp", "travel", "automation", "fli", "trvl"]
+description: "The complete, runnable build of the pipeline from part 1: fli + trvl + an AI agent, full install and MCP config, a reusable prompt template, why I run flights and accommodation sequentially, and how I get accommodation prices that are actually bookable instead of phantom teasers."
+status: "published"
+language: "en"
+series: "budget-travel-pipeline"
+part: 2
+sources:
+  - label: "RobertoReale/fli — fork with --min-duration / --max-duration"
+    href: "https://github.com/RobertoReale/fli"
+  - label: "MikkoParkkola/trvl — Go binary, flights + 6 hotel sources"
+    href: "https://github.com/MikkoParkkola/trvl"
+  - label: "RobertoReale/travel-search — the verified-price script (SerpAPI Google Hotels)"
+    href: "https://github.com/RobertoReale/travel-search"
+  - label: "RobertoReale/hotel-rates-mcp — the same verification as a deterministic MCP tool"
+    href: "https://github.com/RobertoReale/hotel-rates-mcp"
+  - label: "MCP — Model Context Protocol"
+    href: "https://modelcontextprotocol.io"
+  - label: "SerpAPI Google Hotels API — verified prices for exact dates"
+    href: "https://serpapi.com/google-hotels-api"
+  - label: "Google Hotel prices — price accuracy policy"
+    href: "https://support.google.com/hotelprices/answer/6064419?hl=en"
+---
+
+## The starting point
+
+The previous article in this series built a pipeline for budget travel search: `fli` for flights against Google's internal endpoints, `trvl` for accommodation across six sources, an AI agent tying the two together. It ended with one honest admission — the optimization is sequential, not joint — and a note that part 2 would run the real thing and explain why I keep it that way.
+
+This is that article: the pipeline built out in full — install steps, MCP config, a reusable prompt template, and the price-verification step that turns impressive-looking phantom prices into numbers you can actually book. The worked example throughout is a two-person Milan summer trip — departures July 22–August 1, 5-night stay, sea-access destinations that stay budget-viable in peak season — but the setup is the point, not the trip.
+
+One design decision matters before any of the setup, because it isn't obvious: the apparently "correct" approach turned out not to be worth doing.
+
+---
+
+## The one decision that isn't obvious
+
+### The fli fork does the heavy lifting
+
+The previous article covered building [`--min-duration` / `--max-duration` support](https://github.com/RobertoReale/fli/tree/feature/window-duration) into a fork of `fli`. That fork is what makes the whole pipeline tractable. Without it, `fli dates` returns every combination in the date window regardless of trip length — including 1-night and 12-night options you don't want. The fork adds the constraints at the tool level, so the agent never sees unwanted combinations and doesn't need to filter them itself.
+
+The upstream pull request is still open. Until it merges, the fork is the only way to get duration-bounded date-window search via MCP.
+
+### Why sequential, not joint
+
+Joint optimization — calculating the combined cost of flight plus accommodation for every possible date window in the range, then ranking everything together — is the theoretically correct approach. It's also, in practice, unreliable.
+
+The math, for the worked example: 5 destinations × 3 Milan airports = 15 origin-destination pairs, times roughly 10 possible departure dates in the window — about 150 flight-date combinations, each needing its own accommodation search across `trvl`'s six sources. That's hundreds of sequential tool calls. Real-world problems start well before you reach that number: LLMs are non-deterministic over long agentic sessions, and after enough tool calls the model starts skipping routes, summarizing instead of computing, or losing track of which date windows it has already covered. The output becomes unreliable at exactly the scale where you most need it to be reliable.
+
+There's also a less obvious reason joint optimization isn't as necessary as it sounds. `fli dates` doesn't return a single best option — it returns *all* date combinations in the window, ranked by price. Taking the top 8–10 cheapest flight dates and searching accommodation for each one means you are already comparing across multiple date windows — not guessing which window wins. The only thing skipped is the very expensive flight dates, which can't realistically win on total cost regardless of how cheap the hotel is.
+
+The practical approach: get the top 8–10 flight options from `fli`, then use `trvl` to search accommodation for those specific dates. Ten targeted searches instead of a hundred-plus speculative ones. You give up a theoretical sliver of optimality in exchange for results you can actually trust.
+
+This is, word for word, the pipeline the previous article described as the correct one:
+
+```
+fli (fork)   → best dates for flights (--min-duration / --max-duration)
+trvl         → accommodation across 6 sources for those dates
+AI Agent     → rank by combined total cost
+```
+
+---
+
+## Duration
+
+5 nights of accommodation means departing and returning 5 days apart. In `fli` terms, duration is the number of days between the outbound and return date: depart July 30, return August 4 = duration 5 = 5 nights slept. The prompt uses `--min-duration [N] --max-duration [N]` with matching values for a fixed length, or different values for a range — `--min-duration 5 --max-duration 6` returns both 5-night and 6-night combinations.
+
+---
+
+## Covering a multi-airport city
+
+Milan has three airports — Bergamo (BGY), Malpensa (MXP), Linate (LIN) — and the cheapest gateway shifts by route and date. The instinct is to reach for an open-jaw (out of one airport, back into another) or a metropolitan code like `MIL`. Neither works with `fli`: it validates against explicit airport codes (`MIL` is rejected outright), and a `--round` search always departs from and returns to the *same* airport. There is no open-jaw to be had here.
+
+What does work is brute simplicity: list every airport in the prompt and let `fli` run a separate roundtrip search for each, then have the agent merge and rank the lot. Three airports, one ranked table. In the worked example, Bergamo and Malpensa — both low-cost hubs — take every cheap slot, while Linate (the legacy city airport, no Ryanair or Wizz) comes back two to three times more expensive on the same routes. You won't know that without searching it, which is exactly why all three go in. For a single-airport city, just pass its one code.
+
+---
+
+## Building the destination shortlist
+
+The destination list is the one input the pipeline can't generate for you, and it's worth filtering deliberately before you run anything. The guiding principle: **cheap flights are easy to find; cheap accommodation in the same place at the same time is the binding constraint.** A destination with a €40 flight and €300/night rooms in peak season is not a budget destination — and the flight-first search will happily surface it anyway.
+
+So the shortlist is built by applying two filters *before* the search, not after:
+
+- **Accommodation viability in season.** Drop destinations where lodging prices out the budget during your travel window, however cheap the flight is. Classic peak-season traps cost several times what a comparable property costs in a less saturated area nearby.
+- **Hard requirements.** Encode any non-negotiable as a filter on the list itself — e.g. sea/beach access only, which removes inland city destinations regardless of price.
+
+What survives both filters goes into the prompt as the destination list. The size of that list, multiplied by the number of departure airports, is the set of origin-destination pairs `fli` searches:
+
+```
+N destinations × M departure airports = N×M origin-destination pairs
+```
+
+Keep both numbers modest. A focused shortlist of well-chosen destinations produces a more reliable agent run than dozens of speculative ones — the same reason the sequential search beats brute-force joint optimization above.
+
+---
+
+## The second thing that isn't obvious: the free price is a teaser
+
+The joint-vs-sequential decision was the design trap. This is the *data* trap — the one that silently breaks the pipeline's output if you skip it, no matter how good the rest of the run is.
+
+The free accommodation price `trvl` returns is a **Google Hotels teaser**: the lowest per-night figure shown in a preview to earn the click, not a quotable rate. The gap is not small or occasional. A concrete case from the worked example: a hotel listed at **€46/night** for peak-August dates came back at **€269/night** on Booking.com for the same dates and party — a roughly 6× difference. The €46 was never bookable. Rank on it and the pipeline crowns a price that doesn't exist.
+
+Any tool scraping Google Hotels without a key inherits this number. Three tells give the teaser away:
+
+- **No timestamp.** The raw record carries `retrieved_at: "0001-01-01T00:00:00Z"` — it doesn't even record *when* the price was read. It's lead-generation bait, not a quotation.
+- **Unknown basis.** Google [shows the pre-tax base in some countries and the total in others](https://support.google.com/hotelprices/answer/9303538?hl=en); often it's the cheapest room, sometimes a single night or a different occupancy. Google itself runs a [price-accuracy compliance program](https://support.google.com/hotelprices/answer/6064419?hl=en) precisely because the displayed number and the checkout number diverge.
+- **Generic link.** The booking URL points at the *city* search, not the property on a date — so you can't even land on the rate to check it.
+
+So before trusting any accommodation number, the pipeline needs a **verified read**: the real price the provider will honour, for the exact dates and party size, with a link that lands on that rate.
+
+### The fix: a verified read + a working hand-off link
+
+`trvl` actually ships the door to this. Its `trvl serpapi` command routes the same search through [SerpAPI's Google Hotels engine](https://serpapi.com/google-hotels-api), which handles the anti-bot layer and returns **verified per-night *and* total prices for your exact dates** — the teaser killed. A SerpAPI key is free (250 searches/month, no credit card), so the "no API keys" promise of part 1 bends only slightly: discovery stays key-free; *price verification* costs one free key.
+
+There's one gap. `trvl serpapi` returns verified prices but strips the `property_token`, so it can't produce the per-provider booking link. The pipeline closes it with a tiny post-processing script that calls SerpAPI directly — one list call, then one detail call per top hotel using its token — to recover both the verified total **and** the real provider link for that hotel and those dates. That's the difference between *quoting* a number and handing the user a page where the number is honoured.
+
+### Three rules the verified data has to follow
+
+Real provider data surfaces three traps a naive "show the cheapest price" approach walks straight into. They apply to any destination, not just the worked example:
+
+1. **Always compare on the tax-inclusive total, never the per-night.** SerpAPI exposes both the shown total and the pre-tax figure, so you can see how much tax is already baked in. Booking.com quotes all-in; some providers show a lower number and add taxes at checkout. Rank on the total or you'll rank on an illusion. When a provider's shown total equals its pre-tax figure, flag it — that price *will* grow at checkout.
+2. **One tax is in nobody's online total: the local tourist tax.** Many destinations levy a city/tourist tax collected in cash at the property (city taxes or regional surcharges), so no online total includes it. The exact rate varies by municipality and star class, so the pipeline deliberately **does not estimate it** — any single guessed number would be misleading. It applies about equally to every candidate within a destination, so leaving it out doesn't shift the ranking; it's surfaced as a separate cash cost to confirm and budget for locally, never folded into the price.
+3. **Triage links by how long they survive.** Hotel OTA ad-click links (`google.com/aclk`) work at search time, but they're redirects that can expire after a day or two — so always keep a durable fallback alongside them: a plain Booking.com search deep-link for the property and dates never 404s. Vacation-rental redirects (`google.com/travel/clk`) are worse, dead within hours; drop those entirely and fall back to the property's own site.
+
+None of this *locks* a price — that takes a booking API, and it's deliberately out of scope (see [Where this stops](#where-this-stops) below). What these three rules do guarantee is that the number the pipeline ranks on is *real* and the link it hands back *works*. That's the whole gap between a report that looks impressive and one you'd actually book from.
+
+All three rules are implemented, not just described. The verification logic lives in a small open-source script, [RobertoReale/travel-search](https://github.com/RobertoReale/travel-search): it calls SerpAPI's Google Hotels engine, ranks on the tax-inclusive total, flags providers that add tax at checkout, drops the dead vacation-rental redirects, and emits a durable Booking.com fallback link — all backed by an on-disk cache and unit tests. The same logic is also packaged as an MCP server, [RobertoReale/hotel-rates-mcp](https://github.com/RobertoReale/hotel-rates-mcp), exposing one tool, `verified_hotel_prices`. Wiring that in matters: as a *tool* the verification always runs, where a free-text "check the real price" instruction is something the agent can quietly skip and hand back a teaser. Both need only a free SerpAPI key (250 searches/month, no card).
+
+---
+
+## Setup
+
+Everything runs from a single project folder. The AI agent reads MCP configuration from `.mcp.json` in the working directory and activates servers automatically. The folder looks like this:
+
+```
+~/summer-vacation/
+├── .mcp.json
+└── results/
+```
+
+**Prerequisites:**
+
+```bash
+python3 --version   # 3.9 or later
+node --version      # 18 or later — needed for npx
+go version          # any recent version — needed for trvl
+```
+
+**fli, from the fork** — the upstream repository doesn't yet have `--min-duration` / `--max-duration` (a pull request is open):
+
+```bash
+pip install git+https://github.com/RobertoReale/fli.git@feature/window-duration
+fli dates --help    # verify --min-duration and --max-duration appear
+```
+
+*Windows only:* set `PYTHONIOENCODING=utf-8` before any `fli` command, or you'll get encoding errors on destination names.
+
+**trvl:**
+
+```bash
+go install github.com/MikkoParkkola/trvl/cmd/trvl@latest
+# or download a prebuilt binary from:
+# https://github.com/MikkoParkkola/trvl/releases
+trvl --help         # verify the install
+```
+
+**SerpAPI key (for verified prices):** sign up at [serpapi.com](https://serpapi.com/) — the free tier gives 250 searches/month with no credit card. Set the key in the environment before launching, so both `trvl serpapi` and the post-processing script can read it:
+
+```bash
+export SERPAPI_KEY="your_key_here"     # PowerShell: $env:SERPAPI_KEY="your_key_here"
+trvl serpapi "Ischia" --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json
+```
+
+If the prices it returns differ sharply from the free `trvl hotels` numbers, that's the teaser-vs-verified gap from the section above — trust the SerpAPI ones.
+
+**hotel-rates-mcp (for agentic verification):**
+
+```bash
+pip install git+https://github.com/RobertoReale/hotel-rates-mcp.git
+```
+
+**`.mcp.json`:**
+
+```json
+{
+  "mcpServers": {
+    "fli": {
+      "command": "fli-mcp"
+    },
+    "trvl": {
+      "command": "trvl",
+      "args": ["mcp"]
+    },
+    "hotel-rates": {
+      "command": "hotel-rates-mcp"
+    }
+  }
+}
+```
+
+Launch your AI agent from inside that directory — its working directory must be the project folder, so the MCP servers and `results/` resolve correctly:
+
+```bash
+cd ~/summer-vacation
+claude
+```
+
+Verify all three servers are connected:
+
+```
+/mcp
+```
+
+`fli`, `trvl`, and `hotel-rates` should show as `connected`. If any show `pending`, wait a few seconds and check again.
+
+---
+
+## The prompt
+
+The template below works for any departure city, destination list, and date window. Replace the bracketed values before running. If you'd rather not hand-edit the brackets, [`travel-search` ships a no-code prompt builder](https://github.com/RobertoReale/travel-search/blob/main/prompt-builder.html) — a single self-contained HTML page that turns a form into this exact prompt.
+
+```
+Budget travel pipeline
+
+TRIP VARIABLES
+- Departure airports: [e.g. BGY, MXP, LIN] (fli needs airport codes, search each as a separate roundtrip)
+- Overall availability: [e.g. Jul 22 – Aug 6] (earliest you can leave – latest you must be back)
+- Stay duration: [e.g. 5] nights
+- Travellers / Guests: [e.g. 2] adults
+- Outbound flight from home: [e.g. before 16:00]
+- Return flight from destination: [e.g. after 16:00]
+
+ADVANCED FILTERS (Optional - Remove or modify as needed)
+
+[Flights]
+- Flight Stops: [e.g. NON_STOP, ONE_STOP, or ANY]
+- Flight Class: [e.g. ECONOMY, BUSINESS]
+- Airlines (Include/Exclude): [e.g. Exclude FR, Include U2]
+- Airline Alliances: [e.g. SKYTEAM, STAR_ALLIANCE, ONEWORLD]
+- Layover limits: [e.g. max 120 minutes]
+
+[Accommodation - General]
+- Property Type: [hotel, apartment, hostel, resort, bnb, villa, or ANY]
+- Room Type: [entire_home, private_room, shared_room, hotel_room, or ANY]
+- Quality minimums: [e.g. 3 stars, 8.0/10 user rating]
+- Max budget: [e.g. max €150/night]
+- Max distance from center: [e.g. 5 km]
+
+[Accommodation - Perks & Rules]
+- Meal Plan: [e.g. breakfast included, or ANY]
+- Cancellation: [e.g. free cancellation only]
+- Eco-certified: [e.g. TRUE or FALSE]
+
+[Accommodation - Rentals specific (Airbnb/Apartments)]
+- Minimum layout: [e.g. 2 bedrooms, 1 bathroom]
+- Superhost only: [e.g. TRUE or FALSE]
+
+[Accommodation - Verification & Safety]
+- Trusted Providers (OTA Whitelist): [e.g. "Booking.com, Expedia.com" or "ALL"]
+- Verify Links: [e.g. TRUE (drop dead links)]
+
+DESTINATIONS (sea/beach access only)
+- [IATA] ([City]) — [transit note, e.g. "ferry to Ischia ~1 hr"]
+- [IATA] ([City]) — [access note]
+...
+
+Step 1 — Flights (fli MCP server)
+Using the TRIP VARIABLES and ADVANCED FILTERS above:
+- Search each Departure airport as a separate roundtrip using the search_dates tool.
+- Calculate the outbound search window: start date = start of Overall availability. end date = end of Overall availability MINUS Stay duration. (e.g. If availability ends Aug 6 and stay is 5 nights, your end date is Aug 1).
+- Map Stay duration, Travellers, and time preferences to the tool's arguments.
+- Apply all specified [Flights] filters (Stops, Class, Airlines, Alliances, Layover) to the tool.
+- Multiply the single adult fare by Travellers for the trip total.
+Sort by cheapest roundtrip. Save all results to results/flights.md.
+
+Step 2 — Accommodation (trvl MCP server, run searches in parallel)
+For the top [e.g. 5] flight options, search accommodation at the actual destination (not the gateway airport city, if different):
+- Guests: use Travellers variable.
+- Dates: check-in = outbound flight date, check-out = return flight date.
+- Filters: apply all [Accommodation] preferences (General, Perks, Rentals) to your search natively where the tool supports them.
+- Budget: apply the Accommodation max budget to the verified total ÷ nights (if no budget is set, rank purely by total trip cost).
+
+Then VERIFY every shortlisted hotel with the hotel-rates verified_hotel_prices tool before
+ranking — the free trvl prices are Google Hotels teasers, not bookable rates.
+Apply the "Trusted Providers" whitelist (if not ALL) and the "Verify Links" flag.
+For each kept hotel, record the verified total (taxes incl.) and a working
+per-provider booking link.
+
+Save raw results per date window to results/hotels_[dates].json.
+
+Step 3 — Evaluate
+
+a) Anomalies: flag any result that bypassed the filters (e.g. a B&B appearing
+   under a hotel/3-star filter, or a 0-star property passing a star minimum).
+   Keep in the JSON for reference; exclude from the final ranking.
+
+b) Price & tax: rank on the verified TOTAL (taxes included), never the per-night
+   teaser. Prefer the all-in provider (Booking.com quotes taxes in; some others
+   add them at checkout — flag those). Any local tourist tax (e.g. city tax) is paid in cash at the property, is in no online total, and is the
+   same for every provider — note it as a separate cash cost, but do not estimate a
+   figure or fold it into the ranking. Discard any hotel whose only links are
+   vacation-rental redirects (google.com/travel/clk) that 404 — keep working OTA links.
+
+c) Verify: web-search each candidate. Confirm it is currently operating. Collect
+   review highlights — cleanliness, noise levels, distance from sea, recurring
+   complaints.
+
+d) Location: for each hotel, note which part of the destination it is in, distance
+   to the nearest beach, and distance to the ferry port or airport. Assess
+   whether the position suits a sea-access trip.
+
+Step 4 — Final output
+
+Rank all combinations by total trip cost (flight + verified accommodation total).
+Exclude any option with a critical red flag. Present the top [N_FINAL] valid
+options only — do not include filtered-out results in the final report.
+
+For each valid option include:
+- Total cost (flight + verified hotel total, itemised; note any property-collected
+  tourist tax separately as a cash cost, without inventing a figure)
+- Hotel: rating, review count, star category, key amenities
+- Location: neighbourhood · minutes to nearest beach · minutes to ferry/transit
+- Agent verdict (one sentence)
+- Google Flights link for the flight
+- Working per-provider hotel booking link (an OTA link that lands on the rate —
+  not a generic search page, not a vacation-rental redirect)
+
+Export to results/final-results.md.
+```
+
+---
+
+## What the pipeline produces
+
+Each run creates two outputs:
+
+**Raw data** — `results/flights.md` for all flight combinations found, `results/hotels_[dates].json` per date window for all accommodation results. These include flagged anomalies and excluded options and persist regardless of what gets filtered later.
+
+**Final report** — `results/final-results.md`. Ranked by total trip cost. Top N valid combinations only — anomalies and options with red flags are absent from this file. Each entry has cost breakdown, hotel details, location context, agent verdict, and direct booking links to the platform where the best price was found.
+
+---
+
+## Example output
+
+The shape of the final report. The flights are real `fli` results (roundtrip, ×2 travellers). **Both** accommodation figures are **verified** `trvl serpapi` totals for the cheapest *valid* hotel at each destination (3-star minimum, private bathroom, 2 guests, same dates):
+
+| Rank | Trip | Flight (×2) | Hotel — total (5 nt, taxes incl.) | Total |
+|------|------|-------------|------------------------------------|-------|
+| 1 | BGY → NAP (Ischia), Jul 30 → Aug 4 | €94 | Hotel Rivamare (3★, 4.5) — Booking.com €661 *(verified)* | €755 |
+| 2 | MXP → BCN (Barceloneta), Aug 1 → Aug 6 | €98 | Hotel del Mar (3★, 4.2) — Priceline €767 *(verified)* | €865 |
+
+On top of these totals sits a local tourist tax paid in cash at the property — a few euros per person per night depending on the destination. It's the same for every provider at a given hotel, so it never changes the ranking, and it appears in no online total — so the pipeline flags it as a separate cash cost to budget for rather than inventing an estimate.
+
+Here is why the verification step isn't optional. Run the raw pipeline and the free `trvl` price puts a 4-star Ischia hotel at the top at **€46/night → €324 total**: with flights, barely **€420** — a runaway winner that makes Barcelona look like more than twice the price. Verified through SerpAPI, the cheapest genuinely bookable Ischia hotel for those dates is around **€132/night**, and the trip total lands near **€755**. Ischia still wins — but by roughly **€110** over a fully verified Barcelona (**€865**), not by being half its cost. The teaser didn't shave a few euros; it inflated the gap several-fold, and a distortion that size flips rankings outright as often as it merely exaggerates them. Only verified numbers tell you which trip actually wins, and by how much. Rank on the teaser and you book a fantasy.
+
+The anomaly step (Step 3a) earns its place here too, and the Barcelona search proved it: asking `trvl` for a 3-star minimum still returned, at the very top of the list, a 0-star property (St Christopher's Inn at €93/night) and an unrated room listing — both cheaper than the €141 hotel, both failing the "hotel or B&B, private bathroom" constraint. A fixed per-night budget routinely lets the wrong thing through: a 0-star hostel slipping past a "min 3 stars" filter, or a property tagged 4-star that's actually a dorm-bed hostel. The pipeline keeps these in the raw JSON for transparency but flags them and drops them from the final ranking, replacing each with the next valid option. Without that step, the cheapest "winner" is often something you'd never actually book.
+
+One stabilising detail worth knowing: accommodation price per night tends to be far more stable than flight price across small date shifts. Moving a departure by a day or two usually changes the flight, not the hotel's nightly rate — which is why ranking on the *combined* total, with flights as the variable part, works well in practice.
+
+---
+
+## Caveats
+
+All of these tools reverse-engineer internal endpoints that can change without notice. Using them sits in a legal grey area — most platforms prohibit automated access in their terms of service. Use them for personal research.
+
+LLMs are non-deterministic. The same prompt run twice may produce different tool call sequences, query a different subset of destinations, or occasionally skip a route. The flight and hotel figures in the example above come from a single run on the date it was made. Small adjustments in prompt wording can meaningfully change how the agent orchestrates the search.
+
+Prices reflect the moment the search ran. Flight and accommodation prices change continuously, and even a verified `trvl serpapi` read is *accurate*, not *locked* — the real rate the provider showed at that instant, not a held price. The ranking is a starting point for informed booking decisions, not a guarantee.

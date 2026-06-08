@@ -1,0 +1,61 @@
+---
+export const prerender = true;
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ui/ArticleCard.astro';
+import { getCollection } from 'astro:content';
+import { getReadingTime } from '../utils/readingTime';
+import { SITE } from '../config';
+
+const allArticles = await getCollection('articles', ({ data }) => data.status === 'published');
+const recent = allArticles
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 5);
+
+const canonicalURL = `${SITE.url}${Astro.url.pathname}`;
+---
+
+<BaseLayout canonicalURL={canonicalURL}>
+  <div class="header-container">
+    <h1 class="header-title">
+      {SITE.title}
+    </h1>
+    <p class="header-description">{SITE.description}</p>
+  </div>
+
+  {recent.length === 0 && (
+    <p class="empty-state">
+      No articles published yet.
+    </p>
+  )}
+  {recent.length > 0 && (
+    <div>
+      <p class="recent-label">
+        Recent
+      </p>
+      {recent.map(article => (
+        <ArticleCard
+          title={article.data.title}
+          description={article.data.description}
+          date={article.data.date}
+          slug={article.slug}
+          tags={article.data.tags}
+          readingTime={getReadingTime(article.body)}
+          series={article.data.series}
+          part={article.data.part}
+        />
+      ))}
+      <a href="/articles" class="all-articles-link">
+        All articles →
+      </a>
+    </div>
+  )}
+</BaseLayout>
+
+<style>
+  .header-container { margin-bottom: 56px; }
+  .header-title { font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 12px; margin-top: 0; }
+  .header-description { font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 1.1rem; margin: 0; line-height: 1.6; }
+  .empty-state { font-family: 'DM Sans', sans-serif; color: var(--color-muted); text-align: center; padding: 48px 0; border: 1px dashed var(--color-border); }
+  .recent-label { font-family: 'DM Sans', sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); margin: 0 0 32px 0; }
+  .all-articles-link { font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-accent); text-decoration: none; }
+</style>
