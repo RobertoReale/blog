@@ -36,6 +36,33 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
 
       <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
+        <!-- Status toggle -->
+        <div style="margin-bottom: 20px;">
+          <span style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;">
+            Status
+          </span>
+          <div style="display: flex; gap: 8px;">
+            <button
+              id="pill-published"
+              class="status-pill status-pill--active"
+              data-value="published"
+            >
+              Published
+            </button>
+            <button
+              id="pill-draft"
+              class="status-pill"
+              data-value="draft"
+            >
+              Draft
+            </button>
+          </div>
+          <p style="font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--color-muted); margin: 8px 0 0 0;">
+            Overrides the <code style="font-size: 0.75rem;">status</code> field in the frontmatter.
+          </p>
+        </div>
+
+        <!-- Filename -->
         <label
           for="filename-input"
           style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 8px;"
@@ -48,7 +75,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           style="width: 100%; box-sizing: border-box; font-family: 'DM Mono', 'Courier New', monospace; font-size: 0.85rem; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-origin-bg); color: var(--color-text); outline: none;"
         />
         <p style="font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--color-muted); margin: 6px 0 0 0;">
-          Will be saved to <code style="font-size: 0.75rem;">src/content/articles/</code>. Lowercase, hyphens, ends in <code style="font-size: 0.75rem;">.mdx</code>.
+          Saved to <code style="font-size: 0.75rem;">src/content/articles/</code>. Lowercase, hyphens, ends in <code style="font-size: 0.75rem;">.mdx</code>.
         </p>
       </div>
 
@@ -64,7 +91,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
 
       <p style="font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--color-muted); margin: 8px 0 0 0;">
-        After publishing, Vercel will redeploy automatically (~1–2 min).
+        After committing, Vercel will redeploy automatically (~1–2 min).
       </p>
     </div>
 
@@ -87,6 +114,23 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     padding-right: 16px;
     font-size: 0.8rem;
   }
+  .status-pill {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 18px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .status-pill--active {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: transparent;
+  }
 </style>
 
 <script>
@@ -97,6 +141,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const publishBtn = document.getElementById('publish-btn') as HTMLButtonElement;
   const statusMsg = document.getElementById('status-msg')!;
   const parseError = document.getElementById('parse-error')!;
+  const pillPublished = document.getElementById('pill-published') as HTMLButtonElement;
+  const pillDraft = document.getElementById('pill-draft') as HTMLButtonElement;
+
+  let chosenStatus: 'published' | 'draft' = 'published';
+
+  pillPublished.addEventListener('click', () => setChosenStatus('published'));
+  pillDraft.addEventListener('click', () => setChosenStatus('draft'));
+
+  function setChosenStatus(s: 'published' | 'draft') {
+    chosenStatus = s;
+    pillPublished.classList.toggle('status-pill--active', s === 'published');
+    pillDraft.classList.toggle('status-pill--active', s === 'draft');
+    publishBtn.textContent = s === 'published' ? 'Pubblica su GitHub' : 'Salva bozza su GitHub';
+  }
 
   function slugify(title: string): string {
     return title
@@ -106,6 +164,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       .trim()
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
+  }
+
+  function applyStatus(mdx: string, status: string): string {
+    if (/^status:\s*(draft|published)/m.test(mdx)) {
+      return mdx.replace(/^(status:\s*)(draft|published)/m, `$1${status}`);
+    }
+    // Insert after first --- block if status line is missing
+    return mdx.replace(/^---(\r?\n[\s\S]*?\r?\n)---/m, (match, inner) => {
+      return `---${inner}status: ${status}\n---`;
+    });
   }
 
   function parseFrontmatter(mdx: string) {
@@ -148,21 +216,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function renderTable(fm: ReturnType<typeof parseFrontmatter>) {
     if (!fm) return;
     const rows: [string, string][] = [];
-
     if (fm.title) rows.push(['title', fm.title]);
     if (fm.date) rows.push(['date', fm.date]);
-    if (fm.status) {
-      const color = fm.status === 'published' ? '#27ae60' : '#e67e22';
-      rows.push(['status', `<span style="color:${color};font-weight:600;">${fm.status}</span>`]);
-    }
     if (fm.tags.length) rows.push(['tags', fm.tags.map(t => `<code style="font-size:0.78rem;">${t}</code>`).join(' ')]);
     if (fm.description) rows.push(['description', fm.description.slice(0, 100) + (fm.description.length > 100 ? '…' : '')]);
     if (fm.series) rows.push(['series', fm.series]);
     if (fm.part != null) rows.push(['part', String(fm.part)]);
-
-    metaTable.innerHTML = rows.map(([k, v]) =>
-      `<tr><td>${k}</td><td>${v}</td></tr>`
-    ).join('');
+    metaTable.innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
   }
 
   let debounce: ReturnType<typeof setTimeout>;
@@ -201,18 +261,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   });
 
   publishBtn.addEventListener('click', async () => {
-    const content = textarea.value.trim();
+    const rawContent = textarea.value.trim();
     const filename = filenameInput.value.trim();
 
-    if (!content || !filename) {
+    if (!rawContent || !filename) {
       statusMsg.style.color = '#c0392b';
       statusMsg.textContent = 'MDX content and filename are required.';
       return;
     }
 
+    const content = applyStatus(rawContent, chosenStatus);
+
     publishBtn.disabled = true;
     statusMsg.style.color = 'var(--color-muted)';
-    statusMsg.textContent = 'Publishing...';
+    statusMsg.textContent = chosenStatus === 'published' ? 'Publishing...' : 'Saving draft...';
 
     try {
       const res = await fetch('/api/import-article', {
@@ -232,9 +294,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
       const slug = filename.replace(/\.mdx$/, '');
       statusMsg.style.color = '#27ae60';
-      statusMsg.innerHTML = `Published. <a href="https://blog-roberto-reale.vercel.app/articles/${slug}" target="_blank" style="color:inherit;">View article</a> (live in ~2 min).`;
+      if (chosenStatus === 'published') {
+        statusMsg.innerHTML = `Published. <a href="https://blog-roberto-reale.vercel.app/articles/${slug}" target="_blank" style="color:inherit;">View article</a> (live in ~2 min).`;
+      } else {
+        statusMsg.textContent = 'Saved as draft. Edit it in Keystatic when ready to publish.';
+      }
       publishBtn.disabled = false;
-    } catch (e) {
+    } catch {
       statusMsg.style.color = '#c0392b';
       statusMsg.textContent = 'Network error — check your connection.';
       publishBtn.disabled = false;
