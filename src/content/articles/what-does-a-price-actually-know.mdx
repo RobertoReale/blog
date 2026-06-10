@@ -1,0 +1,119 @@
+---
+title: "What Does a Price Actually Know?"
+date: 2026-06-10
+tags: ["finance", "economics", "thinking"]
+description: "A first-principles exploration of how financial markets turn scattered private opinions into prices — and why that forces a counterintuitive conclusion about how to invest."
+originPosition: "bottom"
+sources:
+  - label: "Efficient Capital Markets: A Review of Theory and Empirical Work — Eugene F. Fama, Journal of Finance (1970)"
+    href: ""
+  - label: "The Arithmetic of Active Management — William F. Sharpe, Financial Analysts Journal (1991)"
+    href: "https://www.gsb.stanford.edu/faculty-research/publications/arithmetic-active-management"
+  - label: "On the Impossibility of Informationally Efficient Markets — Grossman & Stiglitz, American Economic Review (1980)"
+    href: "https://www.jstor.org/stable/1805228"
+  - label: "Sharpening the Arithmetic of Active Management — Lasse Heje Pedersen, Financial Analysts Journal (2018)"
+    href: "https://www.tandfonline.com/doi/full/10.2469/faj.v74.n1.4"
+  - label: "SPIVA U.S. Scorecard — S&P Dow Jones Indices (semiannual)"
+    href: "https://www.spglobal.com/spdji/en/spiva/article/us-persistence-scorecard/"
+  - label: "Global Investment Returns Yearbook 2025 — Dimson, Marsh & Staunton / UBS"
+    href: "https://www.ubs.com/global/en/investment-bank/insights-and-data/2025/global-investment-returns-yearbook-2025.html"
+  - label: "Guide to the Markets — J.P. Morgan Asset Management"
+    href: "https://am.jpmorgan.com/us/en/asset-management/adv/insights/market-insights/guide-to-the-markets/"
+status: draft
+language: "en"
+---
+
+<QA question="What is a financial market, at its most basic level?">
+Before talking about stocks, bonds, or ETFs, it's worth asking what a market actually *is* — stripped of the jargon.
+
+A market is a mechanism for turning scattered private valuations into a single public number: the price. Every participant has an opinion about what something is worth. A market is the device that aggregates all those opinions, weighted by how much each person is willing to put on the line, and collapses them into one figure that everyone can see and act on.
+
+The stock market isn't special in this regard. It's the same mechanism as a farmers' market or an auction — the difference is speed and scale. On a modern exchange, millions of opinions are updated in real time, across thousands of assets, by participants ranging from individual savers to algorithms executing trades in microseconds.
+
+The physical infrastructure is largely invisible today. Exchanges are essentially clusters of servers running software that maintains what's called an *order book*: a live ledger of every pending buy and sell order, at every price level. When a buyer's maximum price meets a seller's minimum price, a transaction occurs automatically. The market price at any moment is simply the price of the most recent match.
+
+This is the foundational thing to hold onto: a price is not a fact about an asset. It is an *agreement* between two parties, at a specific moment, reflecting their best current estimate of value. Every price is, at its root, an opinion expressed with money.
+
+[IMAGE: Simplified diagram of an order book — a column of buy orders (bids) stacked below a sell column (asks), with the current price at the crossing point.]
+</QA>
+
+<QA question="How does new information get absorbed into a price?">
+If prices are just opinions, how do they come to reflect reality so quickly and so accurately? The mechanism is surprisingly elegant, and it emerges without any central coordinator.
+
+Markets attract large numbers of participants who are actively searching for assets that are mispriced — either overvalued (which they can profit from by selling) or undervalued (which they can profit from by buying). This continuous hunt for mispricing is the engine that keeps prices close to their true value. The profit motive does the work.
+
+When new information arrives — a company's earnings report, a central bank decision, a geopolitical shock — traders and algorithms update their valuations and place new orders immediately. The order book adjusts. Prices move. For widely followed assets, this process takes seconds, sometimes milliseconds.
+
+A key actor in this process is the *market maker*: a firm that continuously posts both buy and sell orders for a given asset, earning the small difference between the two prices — the *bid-ask spread*. Market makers ensure there is always a counterparty available. Without them, markets would be far less liquid: you might want to sell and find nobody willing to buy at a reasonable price.
+
+The result of all this activity is that by the time most investors read about a piece of news, it has already been absorbed into the price. The market, as a system, processes information faster than any individual participant. No one person knows more than the aggregate. That's the key.
+</QA>
+
+<QA question="What does the Efficient Market Hypothesis actually claim — and what doesn't it?">
+The observation that prices absorb information rapidly is the foundation of the *Efficient Market Hypothesis* (EMH), formalized by economist Eugene Fama in the 1960s. Fama received the Nobel Prize in Economics in 2013 partly for this work. The EMH comes in three versions, each progressively stronger:
+
+The *weak form* says that prices already reflect all historical price data. This means studying past price charts — "technical analysis" — can't give a systematic edge. The market's short-term movements behave, statistically, like a random walk.
+
+The *semi-strong form* says prices reflect all *publicly available* information: earnings reports, news, macroeconomic announcements. Under this version, even careful fundamental analysis of public data can't consistently produce excess returns.
+
+The *strong form* says prices reflect *all* information, including private information. This implies that even insider trading is futile — a version that is almost certainly false, which is exactly why insider trading is both profitable and illegal.
+
+[IMAGE: Three concentric circles labeled "Historical prices" (innermost), "All public information" (middle), "All information including private" (outermost) — representing the three forms of the EMH.]
+
+What the EMH does *not* say is that markets are always right, or that prices are always rational. It says that mispricings are corrected so quickly that they can't be systematically exploited by the time ordinary investors act on them. There is a crucial distinction between *perfect* efficiency and *sufficient* efficiency — and the EMH only claims the latter.
+
+Critically, it says nothing about the long-term direction of prices. The EMH is about short-term unpredictability. It says nothing about whether markets grow over decades.
+</QA>
+
+<QA question="Why do most professional fund managers fail to consistently beat the market?">
+If the EMH is even roughly correct, active fund management faces a structural problem: on average, you can't beat the market, because the sum of all investors *is* the market.
+
+Nobel laureate William Sharpe formalized this in his 1991 paper "The Arithmetic of Active Management." The logic is simple but forceful. All investors together own all the assets in the market. The return of the market is therefore the weighted average of all investors' returns. If some active managers beat the market, others must underperform by an offsetting amount — before costs. After costs, the picture gets systematically worse.
+
+Active funds typically charge 1–3% per year in management fees. Passive index funds charge 0.05–0.3%. That difference, compounded over decades, is devastating. On €100,000 invested over 20 years at 7% annual growth, a 1.8% annual fee difference produces a gap of roughly €65,000 in final wealth — money that went to the fund manager instead of the investor.
+
+The evidence is overwhelming. The SPIVA Scorecard — published semiannually by S&P Dow Jones Indices, and methodologically notable for including funds that closed or merged during the period (to avoid *survivorship bias*) — finds that over 20 years, more than 92% of US large-cap active funds underperform their benchmark. In no asset category does a majority of active funds outperform over 10, 15, or 20 years.
+
+Sharpe's argument has been refined since. Economist Lasse Pedersen has pointed out that it's not a clean zero-sum game: passive funds must trade at predictable moments — when a stock enters or exits an index — creating opportunities for active traders to profit at their expense. Skilled active management is not mathematically impossible. But the high costs, combined with the near-impossibility of identifying genuinely skilled managers *in advance* rather than after the fact, make it a losing bet in expected value for most people.
+</QA>
+
+<QA question="If markets are efficient, why do bubbles and crashes still happen?">
+The EMH's most uncomfortable empirical problem is that financial bubbles demonstrably exist. The dot-com collapse of 2000, the housing crash of 2008, the crypto boom-and-bust of 2021 — in each case, assets were priced in ways that, in retrospect, were obviously disconnected from underlying value. If all information was already priced in, how?
+
+The field of *behavioral finance* — developed by researchers like Daniel Kahneman and Amos Tversky — offers a partial answer. People are not the rational calculators that classical economics assumes. They suffer from systematic cognitive biases: overconfidence in their own predictions, *herding* (copying what other investors are doing because uncertainty makes imitation feel safe), loss aversion, and a deep tendency to extrapolate recent trends indefinitely. These biases are not random noise. They are predictable, directional, and can push prices away from fair value for years.
+
+[COMIC: An investor watching a price chart going nearly vertical, telling himself "the fundamentals are solid" while the chart spells out "THIS IS A BUBBLE" — which he cannot see.]
+
+There's also a deeper structural problem with the EMH, known as the *Grossman-Stiglitz paradox*, identified by economists Sanford Grossman and Joseph Stiglitz in 1980. Their argument: if markets were *perfectly* efficient, no one would have an incentive to gather and analyze information, because there would be no profit to be made from doing so. But if no one analyzes information, markets become inefficient. Therefore a perfectly efficient market is logically self-undermining — some degree of inefficiency must always exist, just enough to reward the analysts who keep prices aligned with reality.
+
+The honest synthesis is that the EMH is approximately correct, not perfectly correct. Markets are efficient enough that most attempts to beat them fail, but not so efficient that opportunities never exist. The remaining inefficiencies are just difficult enough to exploit that they mostly benefit well-resourced institutions, not individual investors.
+</QA>
+
+<QA question="Given all this, what is the rational approach to investing for someone who isn't a professional?">
+The logic converges on a conclusion that feels anticlimactic but is empirically well-supported: buy a diversified index fund, invest regularly, and don't touch it.
+
+This approach — *passive investing* — captures the long-term growth of the broad market at minimal cost. It requires no prediction about which companies or sectors will outperform. It doesn't require watching markets daily. It requires only one bet: that the aggregate economic activity of thousands of companies across the world will continue to create value over time. Not a bet on any individual company, but on the continued functioning of economic activity itself.
+
+According to the Dimson-Marsh-Staunton dataset (which tracks 35 markets over 125 years), worldwide equities have returned roughly 5% per year in real terms. US equities have averaged around 10% annually in nominal terms — closer to 7% after inflation. These are long-run averages that mask enormous year-to-year volatility, which is precisely why time horizon matters so much.
+
+The practical mechanism is simple. Every month, regardless of whether markets are high or low, you invest a fixed amount. When prices are low, you buy more shares for the same money. This *dollar-cost averaging* smooths out volatility over time without requiring any market timing.
+
+"Time in the market beats timing the market" summarizes the evidence. Historical data on US equities shows that missing just the ten best trading days in a 20-year period can cut final returns roughly in half. Those ten days are unpredictable — they often fall immediately after the worst days, when pessimism peaks and selling pressure is highest.
+
+The psychological challenge is real and worth naming directly. Watching a portfolio fall 30–40% during a crash — as happened in 2008 and in March 2020 — generates a powerful urge to sell and limit further losses. Studies consistently show that the average investor, by buying and selling in response to fear and greed, achieves significantly lower returns than a passive strategy would have delivered. The biggest threat to a long-term investor is not the market. It is their own reaction to the market.
+</QA>
+
+<QA question="What happens if everyone invests passively? And what remains genuinely open?">
+This may be the most interesting question that emerges from the logic above. If passive investing is the rational choice for the individual, and rational people make rational choices, shouldn't everyone eventually end up in index funds?
+
+In the United States, passive mutual funds and ETFs crossed a milestone in late 2024, for the first time holding more assets than actively managed funds — a share that has grown dramatically over two decades, up from just 6% in 1996. This raises the Grossman-Stiglitz question in a new form: if no one is doing fundamental analysis, prices stop adjusting when new information arrives. The market that was efficient *because* people tried to beat it starts to break down *because* they stopped trying.
+
+The theoretical answer is that a self-correcting equilibrium exists. As passive indexing grows and the market becomes less efficient, active management becomes more profitable, which attracts active managers back, which corrects the inefficiencies. The system stabilizes at the minimum level of active management needed to keep prices reasonably accurate.
+
+Whether this equilibrium is being approached in practice is a genuine open question in financial economics. Some researchers argue that the growth of indexing is already creating subtle distortions — assets within the same index becoming more correlated than their underlying businesses would justify, for instance. Others find no meaningful degradation in market efficiency so far. The question is live.
+
+There is also a broader open question that the EMH leaves unanswered: *why* have markets grown historically? The EMH explains that you can't predict short-term movements. It says nothing about the upward drift of the past 150 years in developed-market equities. That drift reflects real economic growth — rising productivity, technology, population, and the reinvestment of corporate profits. It is an empirical observation, not a law of nature. Most people who invest in index funds are implicitly betting it will continue. It is worth knowing clearly that that is what you are doing.
+
+</QA>
+
+<Sources sources={frontmatter.sources} />
