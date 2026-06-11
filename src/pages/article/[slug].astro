@@ -13,6 +13,7 @@ import ImageWithCaption from '../../components/mdx/ImageWithCaption.astro';
 import { formatDate } from '../../utils/formatDate';
 import { getReadingTime } from '../../utils/readingTime';
 import { slugify } from '../../utils/slugify';
+import { SITE } from '../../config';
 
 interface SeriesPart {
   part: number;
@@ -114,7 +115,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
           <TagPill tag={tag} href={`/tag/${tag}`} />
         ))}
       </div>
-      <div style="margin-top: 12px;">
+      <div style="margin-top: 12px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
         <button id="share-btn" style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0;">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -122,15 +123,39 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
           </svg>
           <span id="share-btn-text">Copy link</span>
         </button>
+
+        <a href={`/api/download/${entry.slug}`} download style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0; text-decoration: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download MDX
+        </a>
+
+        <button id="cite-btn" data-citation={`${SITE.author}. (${new Date(entry.data.date).getFullYear()}). ${entry.data.title}. ${SITE.title}. ${SITE.url}/article/${entry.slug}`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="M2 15h10"></path>
+            <path d="m9 18 3-3-3-3"></path>
+          </svg>
+          <span id="cite-btn-text">Cite</span>
+        </button>
+
         <input id="share-url" type="text" readonly style="position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px;" />
       </div>
       <script is:inline>
         (function () {
           var btn = document.getElementById('share-btn');
+          var citeBtn = document.getElementById('cite-btn');
           var urlInput = document.getElementById('share-url');
           var text = document.getElementById('share-btn-text');
-          if (!btn || !text) return;
+          var citeText = document.getElementById('cite-btn-text');
+          
+          if (!btn || !text || !citeBtn || !citeText) return;
           if (urlInput) urlInput.value = window.location.href;
+          
           btn.addEventListener('click', function () {
             var url = window.location.href;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -139,13 +164,33 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
                 setTimeout(function () { text.textContent = 'Copy link'; }, 2000);
               });
             } else if (urlInput) {
+              urlInput.value = url;
               urlInput.style.cssText = 'position: static; opacity: 1; pointer-events: auto; width: auto; height: auto;';
               urlInput.select();
               try {
-                // @ts-ignore
                 document.execCommand('copy');
                 text.textContent = 'Copied!';
                 setTimeout(function () { text.textContent = 'Copy link'; }, 2000);
+              } catch (e) {}
+              urlInput.style.cssText = 'position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px;';
+            }
+          });
+
+          citeBtn.addEventListener('click', function () {
+            var citation = citeBtn.getAttribute('data-citation') || '';
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(citation).then(function () {
+                citeText.textContent = 'Copied!';
+                setTimeout(function () { citeText.textContent = 'Cite'; }, 2000);
+              });
+            } else if (urlInput) {
+              urlInput.value = citation;
+              urlInput.style.cssText = 'position: static; opacity: 1; pointer-events: auto; width: auto; height: auto;';
+              urlInput.select();
+              try {
+                document.execCommand('copy');
+                citeText.textContent = 'Copied!';
+                setTimeout(function () { citeText.textContent = 'Cite'; }, 2000);
               } catch (e) {}
               urlInput.style.cssText = 'position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px;';
             }
