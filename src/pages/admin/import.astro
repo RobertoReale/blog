@@ -14,11 +14,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <!-- MDX input -->
     <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
+      <!-- File upload area -->
+      <div style="margin-bottom: 20px; border: 2px dashed var(--color-border); border-radius: 8px; padding: 20px; text-align: center; background: var(--color-origin-bg); transition: border-color 0.15s;" id="drop-zone">
+        <input
+          id="file-input"
+          type="file"
+          accept=".mdx,.md"
+          style="display: none;"
+        />
+        <label
+          for="file-input"
+          style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--color-accent); cursor: pointer; font-weight: 500; display: block;"
+        >
+          Trascina qui un file .mdx o <span style="text-decoration: underline;">clicca per caricarlo</span>
+        </label>
+      </div>
+
       <label
         for="mdx-input"
         style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;"
       >
-        MDX content
+        Oppure incolla il contenuto MDX qui sotto
       </label>
       <textarea
         id="mdx-input"
@@ -143,6 +159,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const parseError = document.getElementById('parse-error')!;
   const pillPublished = document.getElementById('pill-published') as HTMLButtonElement;
   const pillDraft = document.getElementById('pill-draft') as HTMLButtonElement;
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const dropZone = document.getElementById('drop-zone')!;
 
   let chosenStatus: 'published' | 'draft' = 'published';
 
@@ -224,6 +242,51 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     if (fm.part != null) rows.push(['part', String(fm.part)]);
     metaTable.innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
   }
+
+  // Handle file import
+  async function handleFile(file: File) {
+    if (!file.name.endsWith('.mdx') && !file.name.endsWith('.md')) {
+      parseError.textContent = 'Errore: Sono ammessi solo file .mdx o .md';
+      parseError.style.display = 'block';
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      textarea.value = text;
+      filenameInput.value = file.name.replace(/\.md$/, '.mdx');
+      filenameInput.dataset.userEdited = '1';
+      
+      // Trigger update
+      textarea.dispatchEvent(new Event('input'));
+    } catch (err) {
+      console.error(err);
+      parseError.textContent = 'Errore durante la lettura del file.';
+      parseError.style.display = 'block';
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (file) handleFile(file);
+  });
+
+  // Drag and drop events
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--color-accent)';
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = 'var(--color-border)';
+  });
+
+  dropZone.addEventListener('drop', (e: DragEvent) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--color-border)';
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleFile(file);
+  });
 
   let debounce: ReturnType<typeof setTimeout>;
   textarea.addEventListener('input', () => {
