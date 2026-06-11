@@ -9,7 +9,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       Import Article
     </h1>
     <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); margin-bottom: 32px; font-size: 0.95rem;">
-      Paste the MDX content to publish it directly to the repository.
+      Paste the MDX content or select multiple files to publish directly to the repository.
     </p>
 
     <!-- MDX input -->
@@ -20,13 +20,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           id="file-input"
           type="file"
           accept=".mdx,.md"
+          multiple
           style="display: none;"
         />
         <label
           for="file-input"
           style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--color-accent); cursor: pointer; font-weight: 500; display: block;"
         >
-          Trascina qui un file .mdx o <span style="text-decoration: underline;">clicca per caricarlo</span>
+          Trascina qui uno o più file .mdx o <span style="text-decoration: underline;">clicca per caricarli</span>
         </label>
       </div>
 
@@ -42,6 +43,47 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         placeholder="---&#10;title: My Article&#10;date: 2025-01-01&#10;tags: [tag1, tag2]&#10;status: published&#10;description: ...&#10;---&#10;&#10;Article body here..."
         style="width: 100%; box-sizing: border-box; font-family: 'DM Mono', 'Courier New', monospace; font-size: 0.78rem; line-height: 1.6; padding: 14px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-origin-bg); color: var(--color-text); resize: vertical; outline: none;"
       ></textarea>
+    </div>
+
+    <!-- Multi-file list and publish (shown when multiple files are selected) -->
+    <div id="multi-file-section" style="display: none; border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
+      <h2 style="font-family: 'Lora', serif; font-size: 1.25rem; margin: 0 0 16px 0;">Articoli pronti per l'importazione</h2>
+      <div id="multi-file-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Dynamic list of items -->
+      </div>
+      
+      <!-- Global Status Toggle for multiple files -->
+      <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <span style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;">
+          Stato di pubblicazione (per tutti i file)
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <button
+            id="multi-pill-published"
+            class="status-pill status-pill--active"
+            data-value="published"
+          >
+            Published
+          </button>
+          <button
+            id="multi-pill-draft"
+            class="status-pill"
+            data-value="draft"
+          >
+            Draft
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button
+          id="publish-all-btn"
+          style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
+        >
+          Pubblica tutti su GitHub
+        </button>
+        <span id="multi-status-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem;"></span>
+      </div>
     </div>
 
     <!-- Preview + publish (shown after parsing) -->
@@ -162,16 +204,46 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const fileInput = document.getElementById('file-input') as HTMLInputElement;
   const dropZone = document.getElementById('drop-zone')!;
 
+  // Multi-file elements
+  const multiFileSection = document.getElementById('multi-file-section')!;
+  const multiFileList = document.getElementById('multi-file-list')!;
+  const publishAllBtn = document.getElementById('publish-all-btn') as HTMLButtonElement;
+  const multiStatusMsg = document.getElementById('multi-status-msg')!;
+  const multiPillPublished = document.getElementById('multi-pill-published') as HTMLButtonElement;
+  const multiPillDraft = document.getElementById('multi-pill-draft') as HTMLButtonElement;
+
+  interface ArticleFile {
+    file: File;
+    name: string;
+    content: string;
+    parsed: ReturnType<typeof parseFrontmatter>;
+    status: 'pending' | 'uploading' | 'success' | 'error';
+    error?: string;
+  }
+
+  let selectedFiles: ArticleFile[] = [];
   let chosenStatus: 'published' | 'draft' = 'published';
 
+  // Single-file status toggle
   pillPublished.addEventListener('click', () => setChosenStatus('published'));
   pillDraft.addEventListener('click', () => setChosenStatus('draft'));
 
+  // Multi-file status toggle
+  multiPillPublished.addEventListener('click', () => setChosenStatus('published'));
+  multiPillDraft.addEventListener('click', () => setChosenStatus('draft'));
+
   function setChosenStatus(s: 'published' | 'draft') {
     chosenStatus = s;
+    
+    // Update single-file pills
     pillPublished.classList.toggle('status-pill--active', s === 'published');
     pillDraft.classList.toggle('status-pill--active', s === 'draft');
     publishBtn.textContent = s === 'published' ? 'Pubblica su GitHub' : 'Salva bozza su GitHub';
+
+    // Update multi-file pills
+    multiPillPublished.classList.toggle('status-pill--active', s === 'published');
+    multiPillDraft.classList.toggle('status-pill--active', s === 'draft');
+    publishAllBtn.textContent = s === 'published' ? 'Pubblica tutti su GitHub' : 'Salva tutti come bozze';
   }
 
   function slugify(title: string): string {
@@ -243,32 +315,111 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     metaTable.innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
   }
 
-  // Handle file import
-  async function handleFile(file: File) {
-    if (!file.name.endsWith('.mdx') && !file.name.endsWith('.md')) {
-      parseError.textContent = 'Errore: Sono ammessi solo file .mdx o .md';
-      parseError.style.display = 'block';
-      return;
-    }
+  function renderMultiFileList() {
+    multiFileList.innerHTML = selectedFiles.map((item) => {
+      let statusBadge = '';
+      if (item.status === 'pending') statusBadge = '<span style="color: var(--color-muted);">In attesa</span>';
+      else if (item.status === 'uploading') statusBadge = '<span style="color: var(--color-accent); font-weight: bold;">Caricamento...</span>';
+      else if (item.status === 'success') statusBadge = '<span style="color: #27ae60; font-weight: bold;">Caricato!</span>';
+      else if (item.status === 'error') statusBadge = `<span style="color: #c0392b; font-weight: bold;">Errore: ${item.error || 'Generico'}</span>`;
 
-    try {
-      const text = await file.text();
-      textarea.value = text;
-      filenameInput.value = file.name.replace(/\.md$/, '.mdx');
-      filenameInput.dataset.userEdited = '1';
+      return `
+        <div style="border: 1px solid var(--color-border); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; background: var(--color-origin-bg);">
+          <div>
+            <div style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;">
+              ${item.parsed?.title || item.file.name}
+            </div>
+            <div style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--color-muted); margin-top: 4px;">
+              ${item.name}
+            </div>
+          </div>
+          <div style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;">
+            ${statusBadge}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Handle files input
+  async function handleFiles(files: FileList) {
+    parseError.style.display = 'none';
+    parseError.textContent = '';
+    statusMsg.textContent = '';
+    multiStatusMsg.textContent = '';
+
+    if (files.length === 0) return;
+
+    if (files.length === 1) {
+      // Single file mode
+      multiFileSection.style.display = 'none';
+      const file = files[0];
+      if (!file.name.endsWith('.mdx') && !file.name.endsWith('.md')) {
+        parseError.textContent = 'Errore: Sono ammessi solo file .mdx o .md';
+        parseError.style.display = 'block';
+        return;
+      }
+
+      try {
+        const text = await file.text();
+        textarea.value = text;
+        filenameInput.value = file.name.replace(/\.md$/, '.mdx');
+        filenameInput.dataset.userEdited = '1';
+        
+        // Trigger update to parse and show preview
+        textarea.dispatchEvent(new Event('input'));
+      } catch (err) {
+        console.error(err);
+        parseError.textContent = 'Errore durante la lettura del file.';
+        parseError.style.display = 'block';
+      }
+    } else {
+      // Multi file mode
+      previewSection.style.display = 'none';
+      multiFileSection.style.display = 'block';
+      selectedFiles = [];
+
+      for (const file of Array.from(files)) {
+        if (!file.name.endsWith('.mdx') && !file.name.endsWith('.md')) {
+          continue;
+        }
+
+        try {
+          const content = await file.text();
+          const parsed = parseFrontmatter(content);
+          
+          const articleFile: ArticleFile = {
+            file,
+            name: file.name.replace(/\.md$/, '.mdx'),
+            content,
+            parsed,
+            status: 'pending'
+          };
+          
+          if (!parsed || !parsed.title) {
+            articleFile.status = 'error';
+            articleFile.error = 'Frontmatter non valido o titolo mancante';
+          }
+          
+          selectedFiles.push(articleFile);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      if (selectedFiles.length === 0) {
+        parseError.textContent = 'Nessun file .mdx o .md valido selezionato.';
+        parseError.style.display = 'block';
+        multiFileSection.style.display = 'none';
+        return;
+      }
       
-      // Trigger update
-      textarea.dispatchEvent(new Event('input'));
-    } catch (err) {
-      console.error(err);
-      parseError.textContent = 'Errore durante la lettura del file.';
-      parseError.style.display = 'block';
+      renderMultiFileList();
     }
   }
 
   fileInput.addEventListener('change', () => {
-    const file = fileInput.files?.[0];
-    if (file) handleFile(file);
+    if (fileInput.files) handleFiles(fileInput.files);
   });
 
   // Drag and drop events
@@ -284,8 +435,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   dropZone.addEventListener('drop', (e: DragEvent) => {
     e.preventDefault();
     dropZone.style.borderColor = 'var(--color-border)';
-    const file = e.dataTransfer?.files?.[0];
-    if (file) handleFile(file);
+    const files = e.dataTransfer?.files;
+    if (files) handleFiles(files);
   });
 
   let debounce: ReturnType<typeof setTimeout>;
@@ -323,6 +474,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     filenameInput.dataset.userEdited = '1';
   });
 
+  // Publish single article
   publishBtn.addEventListener('click', async () => {
     const rawContent = textarea.value.trim();
     const filename = filenameInput.value.trim();
@@ -368,5 +520,56 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       statusMsg.textContent = 'Network error — check your connection.';
       publishBtn.disabled = false;
     }
+  });
+
+  // Publish multiple articles sequentially
+  publishAllBtn.addEventListener('click', async () => {
+    publishAllBtn.disabled = true;
+    multiStatusMsg.style.color = 'var(--color-muted)';
+    multiStatusMsg.textContent = 'Caricamento in corso...';
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const item = selectedFiles[i];
+      if (item.status === 'error' || item.status === 'success') continue;
+      
+      item.status = 'uploading';
+      renderMultiFileList();
+      
+      const contentWithStatus = applyStatus(item.content, chosenStatus);
+      
+      try {
+        const res = await fetch('/api/import-article', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: item.name, content: contentWithStatus }),
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          item.status = 'success';
+          successCount++;
+        } else {
+          item.status = 'error';
+          item.error = data.error || 'Errore API';
+        }
+      } catch (err) {
+        item.status = 'error';
+        item.error = 'Errore di rete';
+      }
+      
+      renderMultiFileList();
+    }
+    
+    const failedCount = selectedFiles.length - successCount;
+    if (failedCount === 0) {
+      multiStatusMsg.style.color = '#27ae60';
+      multiStatusMsg.textContent = `Caricamento completato con successo! ${successCount} articoli pubblicati su GitHub (live in ~2 min).`;
+    } else {
+      multiStatusMsg.style.color = '#c0392b';
+      multiStatusMsg.textContent = `Caricamento completato. Riusciti: ${successCount}, Falliti: ${failedCount}.`;
+    }
+    publishAllBtn.disabled = false;
   });
 </script>
