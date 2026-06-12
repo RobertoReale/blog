@@ -19,7 +19,8 @@ const topTags = uniqueTags.slice(0, 5);
 ---
 
 <div style="margin-bottom: 40px;">
-  <div style="position: relative; margin-bottom: 16px;">
+  <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+    <div style="position: relative; flex: 1; min-width: 250px;">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="17" height="17"
@@ -57,6 +58,18 @@ const topTags = uniqueTags.slice(0, 5);
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
     </button>
+    </div>
+
+    <select
+      id="article-sort"
+      aria-label="Sort articles"
+      style="padding: 11px 36px 11px 16px; border-radius: 8px; border: 1.5px solid var(--color-border); background-color: var(--color-bg); color: var(--color-text); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; cursor: pointer; transition: border-color 0.15s ease; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center;"
+    >
+      <option value="date-desc">Newest first</option>
+      <option value="date-asc">Oldest first</option>
+      <option value="title-asc">Title (A-Z)</option>
+      <option value="title-desc">Title (Z-A)</option>
+    </select>
   </div>
 
   <div style="display: flex; flex-wrap: wrap; gap: 8px;" role="group" aria-label="Filter by tag">
@@ -78,6 +91,8 @@ const topTags = uniqueTags.slice(0, 5);
 
     const searchInput = document.getElementById('article-search') as HTMLInputElement | null;
     const clearBtn    = document.getElementById('search-clear') as HTMLButtonElement | null;
+    const sortSelect  = document.getElementById('article-sort') as HTMLSelectElement | null;
+    const container   = document.getElementById('articles-container');
     const pills       = document.querySelectorAll<HTMLButtonElement>('.tag-pill');
     const wrappers    = Array.from(document.querySelectorAll<HTMLElement>('.article-wrapper'));
     const loadMoreContainer = document.getElementById('load-more-container');
@@ -104,6 +119,30 @@ const topTags = uniqueTags.slice(0, 5);
       const queryOk = q === '' || title.includes(q) || descr.includes(q) || articleTags.some(t => t.toLowerCase().includes(q));
       const tagOk   = activeTag === 'all' || articleTags.some(t => t.toLowerCase() === activeTag.toLowerCase());
       return queryOk && tagOk;
+    };
+
+    const sortWrappers = () => {
+      const sortValue = sortSelect?.value ?? 'date-desc';
+      
+      wrappers.sort((a, b) => {
+        const articleA = getArticle(a);
+        const articleB = getArticle(b);
+        if (!articleA || !articleB) return 0;
+        
+        if (sortValue.startsWith('date')) {
+          const dateA = new Date(articleA.getAttribute('data-date') ?? 0).valueOf();
+          const dateB = new Date(articleB.getAttribute('data-date') ?? 0).valueOf();
+          return sortValue === 'date-desc' ? dateB - dateA : dateA - dateB;
+        } else {
+          const titleA = articleA.getAttribute('data-title') ?? '';
+          const titleB = articleB.getAttribute('data-title') ?? '';
+          return sortValue === 'title-asc' ? titleA.localeCompare(titleB) : titleB.localeCompare(titleA);
+        }
+      });
+
+      if (container) {
+        wrappers.forEach(wrapper => container.appendChild(wrapper));
+      }
     };
 
     const render = () => {
@@ -147,7 +186,15 @@ const topTags = uniqueTags.slice(0, 5);
     };
 
     // Init
+    sortWrappers();
     render();
+
+    // Sort select
+    sortSelect?.addEventListener('change', () => {
+      limit = PAGE_SIZE; // optional: reset limit when changing sort? Yes, better UX
+      sortWrappers();
+      render();
+    });
 
     // Load more
     loadMoreBtn?.addEventListener('click', () => {
@@ -207,7 +254,7 @@ const topTags = uniqueTags.slice(0, 5);
 </script>
 
 <style>
-  #article-search:focus {
+  #article-search:focus, #article-sort:focus {
     border-color: var(--color-accent) !important;
   }
 
