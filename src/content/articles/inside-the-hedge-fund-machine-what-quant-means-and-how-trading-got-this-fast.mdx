@@ -1,0 +1,149 @@
+---
+title: "Inside the Hedge Fund Machine: What 'Quant' Means, and How Trading Got This Fast"
+date: 2026-06-12
+tags: [finance, economics, thinking]
+description: "A first-principles look at what hedge funds and quant funds actually are, where the idea of algorithmic trading came from, how high-frequency trading works mechanically, and how 'skill' gets measured once most decisions are made by machines."
+origin: "A few weeks ago a friend sent me a LinkedIn post from a quantitative researcher at a hedge fund, sharing a long YouTube conversation he'd recorded about what it's actually like to work in quant finance — partly to demystify the industry for curious outsiders and students, and partly to warn people away from the 'trading guru' scams that prey on that same curiosity. I'd heard the words 'hedge fund', 'quant', and 'HFT' for years without ever really knowing what any of them meant beyond vague Wall Street mythology. So I started from the most basic question I could think of — what *is* a hedge fund, really? — and kept pulling the thread."
+originPosition: "bottom"
+sources:
+  - label: "Hedge Fund Fees: Types and Structures — Preqin Academy"
+    href: "https://www.preqin.com/academy/lesson-3-hedge-funds/hedge-fund-fees-types-and-structures"
+  - label: "Customer and Employee Losses in Lehman's Bankruptcy — Liberty Street Economics, Federal Reserve Bank of New York"
+    href: "https://libertystreeteconomics.newyorkfed.org/2019/01/customer-and-employee-losses-in-lehmans-bankruptcy/"
+  - label: "Edward Thorp: the world's greatest investors — MoneyWeek"
+    href: "https://moneyweek.com/461698/edward-thorp-the-worlds-greatest-investors"
+  - label: "Transformation & Regulation: Equities Market Structure, 1934 to 2018 — SEC Historical Society"
+    href: "https://www.sechistorical.org/museum/galleries/msr/msr03d_nyse.php"
+  - label: "Stock Market Crash of 1987 — Federal Reserve History"
+    href: "https://www.federalreservehistory.org/essays/stock-market-crash-of-1987"
+  - label: "Famed Medallion Fund 'Stretches ... Explanation to the Limit,' Professor Claims — Institutional Investor"
+    href: "https://www.institutionalinvestor.com/article/2bswymr8cih3jeaslxc00/portfolio/famed-medallion-fund-stretches-explanation-to-the-limit-professor-claims"
+  - label: "The Man Who Solved the Market — Gregory Zuckerman (Penguin Random House)"
+    href: "https://www.penguinrandomhouse.com/books/557104/the-man-who-solved-the-market-by-gregory-zuckerman/"
+  - label: "High Frequency Market Making — Carmona & Webster (arXiv)"
+    href: "https://arxiv.org/pdf/1210.5781"
+  - label: "The Rigged Market: A Review of Flash Boys — Harvard Political Review"
+    href: "https://harvardpolitics.com/rigged-market-review-flash-boys/"
+  - label: "Order Approving IEX Rule Filing (350-microsecond speed bump) — U.S. Securities and Exchange Commission"
+    href: "https://www.sec.gov/files/rules/sro/iex/2020/34-89686.pdf"
+  - label: "The Capital Asset Pricing Model — André F. Perold, Journal of Economic Perspectives (American Economic Association)"
+    href: "https://pubs.aeaweb.org/doi/pdf/10.1257/0895330042162340"
+  - label: "Medallion Fund: The Ultimate Counterexample — Cornell Capital Group"
+    href: "https://www.cornell-capital.com/blog/2020/02/medallion-fund-the-ultimate-counterexample.html"
+status: published
+language: "en"
+series: "inside-quant-finance"
+part: 1
+---
+
+<QA question="What is a hedge fund, and what does it actually mean for a fund to be 'quant'?">
+
+Before getting anywhere near algorithms and microseconds, it's worth starting from the most basic unit of this entire world: a *fund*.
+
+A fund is simply a pool of money collected from many investors and managed by someone — or something — on their behalf. The manager decides what to buy and sell; investors share in the gains and losses in proportion to what they put in. Everything else is detail.
+
+Most people's experience of "funds" comes through mutual funds or ETFs, which are heavily regulated: they have to disclose their holdings regularly, and they're mostly restricted to buying and holding stocks and bonds in fairly conventional ways. A *hedge fund* is a fund that operates under a very different rulebook — not because it's doing anything illegal, but because it's only open to a narrow set of investors: large institutions (pension funds, endowments, sovereign wealth funds) and individuals wealthy enough to be classified as "accredited" or "qualified" investors. Because these investors are assumed to be sophisticated enough to evaluate risk for themselves, regulators give hedge funds far more latitude than they give mutual funds.
+
+That latitude shows up in a handful of concrete freedoms. A hedge fund can sell assets short — betting that a price will fall, not just rise. It can use leverage, controlling a much larger position than its actual capital would normally allow. It can trade essentially any asset: stocks, bonds, currencies, commodities, derivatives, real estate. And it operates with far lighter disclosure requirements than a mutual fund.
+
+The name "hedge" comes from the original idea behind these vehicles: combining long and short positions so that the fund's returns wouldn't depend on which direction the overall market moved — a *hedge* against market risk. Ironically, many modern hedge funds use this freedom to take on enormous risk rather than to reduce it; the name has mostly become a historical artifact.
+
+Hedge funds are also known for a distinctive fee structure, often summarized as ["2 and 20"](https://www.preqin.com/academy/lesson-3-hedge-funds/hedge-fund-fees-types-and-structures): a 2% annual fee on the total assets under management, charged regardless of performance, plus a 20% cut of any profits above a certain threshold. The management fee keeps the lights on — salaries, technology, compliance — while the performance fee is what makes successful hedge fund managers among the highest-paid people in finance.
+
+Now, where does *leverage* — "controlling more money than you actually have" — come from in practice? The main channel is something called [prime brokerage](https://www.preqin.com/academy/lesson-3-hedge-funds/hedge-fund-fees-types-and-structures): large investment banks (Goldman Sachs, Morgan Stanley, JPMorgan, and others) offer hedge funds a bundle of services — lending cash, lending securities, clearing trades — using the fund's own portfolio as collateral. It's a deeply intertwined relationship: the bank earns fees and interest, and the fund gets access to far more capital than it actually owns.
+
+This relationship has a dark side, and 2008 made it vivid. When [Lehman Brothers collapsed](https://libertystreeteconomics.newyorkfed.org/2019/01/customer-and-employee-losses-in-lehmans-bankruptcy/), it had been a major prime broker for hedge funds, particularly through its London-based unit. Many of those funds had allowed Lehman to "rehypothecate" their collateral — essentially, to re-lend the securities they'd posted. When Lehman entered bankruptcy, those assets became entangled in the insolvency process, and some hedge fund clients found themselves unable to access their own holdings or even move to a new broker. A handful of funds didn't survive the freeze. The episode is a useful reminder that "leverage" isn't an abstract number on a spreadsheet — it's a web of obligations between a fund and the banks that finance it, and when one node in that web fails, the shock travels.
+
+[IMAGE: A simple diagram showing the relationship between a hedge fund, its prime broker (a bank), and the broader market — illustrating how collateral flows from the fund to the bank in exchange for leverage, and what happens to that chain if the bank fails.]
+
+So much for "hedge fund." What about "quant"?
+
+*Quant* is short for *quantitative* — and it describes an approach, not a type of fund. A "quant" researcher, trader, or fund makes decisions using mathematical models, statistics, and algorithms, rather than relying primarily on human judgment about a company's prospects. This sits in contrast to *discretionary* investing — the Warren Buffett style of reading financial statements, meeting management, and forming a judgment about what a business is actually worth.
+
+Not every hedge fund is a quant fund, and not every quant strategy lives inside a hedge fund — some sit inside banks' trading desks, or inside specialized proprietary trading firms. But the overlap at the cutting edge is enormous, and some of the most famous names in finance — Renaissance Technologies, Two Sigma, D.E. Shaw, Citadel — are hedge funds built almost entirely around quantitative methods. Understanding *why* this overlap exists, and how it came to dominate so much of modern finance, is where the story gets genuinely interesting — and where we're headed next.
+
+</QA>
+
+<QA question="Where did the idea of letting math — and eventually machines — make trading decisions come from?">
+
+It helps to separate two threads that get tangled together in most popular accounts, because they actually have quite different histories and motivations.
+
+The first thread is about *execution* — how an order to buy or sell actually reaches the market. The second is about *decision-making* — what to buy or sell in the first place, and when. Algorithmic trading, in the modern sense, is what happens when these two threads converge. But they didn't start together.
+
+**Thread one: automating execution.** In 1976, the New York Stock Exchange introduced the [Designated Order Turnaround system, or DOT](https://www.sechistorical.org/museum/galleries/msr/msr03d_nyse.php) — a way for brokers to route small orders electronically straight to the specialists on the trading floor, instead of relying on phone calls and paper tickets. It wasn't "smart" in any sense; it was simply faster plumbing. But faster plumbing changes what's possible. Through the 1980s, this evolved into *program trading* — strategies where a computer would automatically buy or sell a basket of stocks once certain conditions were met. One particularly popular version was *portfolio insurance*: a hedging technique that mechanically sold stock index futures as the market fell, intended to act like an automatic stop-loss for a whole portfolio.
+
+On October 19, 1987 — "Black Monday" — this mechanism turned into a feedback loop. As prices started falling, portfolio insurance programs sold futures, which pushed prices down further, which triggered more selling from the same programs. The [Dow Jones Industrial Average fell 22.6% in a single day](https://www.federalreservehistory.org/essays/stock-market-crash-of-1987) — still, decades later, the largest one-day percentage drop in its history. Program trading didn't *cause* the crash on its own — a strong bull market, a weakening dollar, and rising bond yields had already created a fragile setup — but it's widely seen as having dramatically amplified it. This is thread one in a nutshell: automation applied to *how trades get executed*, with very little intelligence about *why*.
+
+**Thread two: automating the decision itself.** This thread starts, oddly enough, with blackjack. In 1962, a young mathematics professor named Edward Thorp published *Beat the Dealer*, demonstrating with rigorous probability theory that card counting could give a player a genuine, sustained edge over a casino. Having proven that a "random" game wasn't actually random if you had the right model, Thorp turned the same instinct toward financial markets. In 1969, he co-founded what became [Princeton/Newport Partners](https://moneyweek.com/461698/edward-thorp-the-worlds-greatest-investors) — widely considered the first market-neutral, genuinely quantitative hedge fund. For roughly two decades, it delivered consistent double-digit annual returns without a single losing quarter, built almost entirely on mathematical models of pricing relationships rather than opinions about companies.
+
+This is the real origin of "quant" as we use the word today: not about speed, but about *replacing judgment with a model*.
+
+[COMIC: A two-panel illustration. Left panel: a chaotic 1980s trading floor, people shouting and waving paper tickets in the air. Right panel: a quiet, dimly lit server room with rows of blinking machines and no people — a caption underneath both panels simply reads "the market", pointing to both.]
+
+The thread reaches its most extreme expression with Jim Simons. A mathematician who had spent part of the 1960s breaking codes for the U.S. government during the Cold War, Simons left academia and, in 1982, founded [Renaissance Technologies](https://www.penguinrandomhouse.com/books/557104/the-man-who-solved-the-market-by-gregory-zuckerman/). Renaissance took Thorp's idea and pushed it to its logical extreme: hire no one with a Wall Street background. Hire mathematicians, physicists, astronomers, cryptographers, computational linguists — people trained to find structure in noisy data, with no preconceptions about what a "good company" looks like.
+
+The contrast with traditional investing is worth dwelling on, because it's a genuinely different way of relating to information. A fundamental analyst studying a company is a bit like a meteorologist trying to understand *why* it rains — building a causal model of atmospheric physics, ocean currents, pressure systems. A purely statistical model, by contrast, is more like someone who has fifty years of weather data and notices that whenever three particular conditions occur together, it rains the next day 58% of the time — without necessarily knowing *why*, and without needing to. Renaissance's flagship Medallion fund became the most extreme proof of concept for the second approach: from 1988 to 2018, it reportedly generated [average annual returns of around 66% before fees](https://www.institutionalinvestor.com/article/2bswymr8cih3jeaslxc00/portfolio/famed-medallion-fund-stretches-explanation-to-the-limit-professor-claims) — a figure so far outside the normal range of investment returns that finance professors have written papers just trying to make sense of it.
+
+By the 2000s, these two threads — fast execution and statistical decision-making — had essentially merged. Trading became something that happens *inside* computers, continuously, with humans mostly setting parameters rather than placing individual orders. By around 2009, estimates suggested that algorithmic strategies — and high-frequency trading specifically — accounted for [the majority, by some measures up to around 70%, of U.S. equity trading volume](https://arxiv.org/pdf/1210.5781).
+
+There's a third layer to this story, and it's the one that's reshaping the field right now: modern AI systems that don't just execute a model someone designed, but search for patterns nobody explicitly told them to look for. What that means in practice — and why it makes some of the smartest people in finance distinctly uneasy — is where the next part of this exploration picks up.
+
+</QA>
+
+<QA question="How does high-frequency trading actually work, and why can the same stock have different prices on different exchanges at the same moment?">
+
+"High-frequency trading" (HFT) is a label for a family of strategies that share one defining trait: they execute an enormous number of trades, each held for a tiny fraction of a second, each capturing a profit margin so small it would be meaningless on its own — but which adds up to something significant when repeated millions of times a day. To understand how this actually works, it helps to look at the two techniques that show up again and again.
+
+**Market making.** As explored in [What Does a Price Actually Know?](/articles/what-does-a-price-actually-know), a *market maker* is a participant that continuously offers to both buy and sell a given asset, profiting from the small gap between the two prices — the *bid-ask spread*. An HFT market maker does this across thousands of securities simultaneously, constantly updating its quotes as conditions change, earning that spread over and over again. The faster and more accurately it can update its quotes, the less risk it carries from stale prices — which is why speed, in this business, isn't a luxury but a core part of risk management.
+
+**Cross-exchange arbitrage.** This one requires a bit of unpacking, because it raises a question that sounds like it shouldn't have an interesting answer: why would the *same* stock trade at different prices on different exchanges at the same moment?
+
+The first piece of the puzzle is that a company doesn't trade on just one exchange. A stock might be officially *listed* on, say, the NASDAQ — but its shares can be bought and sold on dozens of trading venues: the NYSE, Cboe BZX (formerly BATS), IEX, various "dark pools," and exchanges overseas. This isn't unusual or suspicious; it's the same as a pair of sneakers being sold simultaneously on Amazon, on a retailer's own website, and in a physical store. Same product, different marketplaces, each with its own independent flow of buyers and sellers.
+
+And that's the second piece: each of these venues maintains its own separate *order book* — a live ledger of every pending buy and sell order at every price level, as described in [What Does a Price Actually Know?](/articles/what-does-a-price-actually-know). If a wave of buying hits one venue a fraction of a second before it reaches another, the price on that first venue can tick up while the second venue is still showing the old, lower price. For a brief window — often just milliseconds — the "same" stock is priced slightly differently in two places.
+
+An HFT arbitrage strategy exists to find and close that gap: buy where the price is momentarily lower, sell where it's momentarily higher, and pocket the difference before the two prices converge — which, thanks to exactly this kind of arbitrage, they almost always do, very quickly.
+
+[IMAGE: A side-by-side diagram of three simplified order books — labeled "Exchange A", "Exchange B", "Exchange C" — for the same stock, showing slightly different best bid/ask prices on each, with an arrow illustrating an arbitrage trade: buying on the exchange with the lower ask and selling on the one with the higher bid.]
+
+A natural question follows: if this is a known issue, why not just merge everything into a single, unified order book per stock? The honest answer is that this is far more a political and economic problem than a technological one. A single consolidated venue would mean picking a winner among competing exchanges, creating a monopoly, and removing the competitive pressure that — in theory — keeps trading costs down for everyone. The U.S. does have a system that consolidates price data from all venues into a single feed, called the Securities Information Processor (SIP) — but it's slower than the direct data feeds that exchanges sell separately, and HFT firms pay substantial sums for early access to those direct feeds. That speed gap between the "public" consolidated price and the "private" direct feed is at the center of most of the controversy around HFT.
+
+One exchange took this critique seriously enough to build an entire business around it. IEX was founded specifically as a response to the speed arms race, and its signature feature is a [350-microsecond "speed bump"](https://www.sec.gov/files/rules/sro/iex/2020/34-89686.pdf) — a deliberate, tiny delay applied equally to every participant, intended to neutralize the advantage of being marginally faster. The U.S. Securities and Exchange Commission approved IEX as a full stock exchange in 2016, in part because the delay was judged too small to violate rules requiring "immediate" access to quotes — while being large enough to matter at the timescales HFT operates on.
+
+That word "tiny" deserves a sense of scale, because the amounts of money spent chasing these timescales are not tiny at all. Perhaps the most famous example is [Spread Networks](https://harvardpolitics.com/rigged-market-review-flash-boys/), a company that spent roughly $300 million digging a fiber-optic cable in as close to a straight line as physically possible between Chicago and northern New Jersey — tunneling through mountains rather than following existing routes — purely to cut the round-trip signal time between the Chicago futures market and the New York stock market from around 16-17 milliseconds down to 13. The same logic shows up at the level of individual exchanges, where firms pay to *co-locate* their servers physically inside an exchange's data center, sometimes down to competing over which server rack has a marginally shorter cable to the exchange's matching engine.
+
+It's worth sitting with what all of this buys: not seconds, not even full milliseconds in many cases — fractions of a millisecond. Whether that's a reasonable use of hundreds of millions of dollars in capital and some of the best engineering talent in the world is a question we'll come back to directly in the next part — along with what happens when this hyper-fast, interconnected system gets put under genuine stress, as it did rather dramatically on a single afternoon in May 2010.
+
+</QA>
+
+<QA question="Once a fund is making money, how do you know whether it's actually skilled — and what do the standard measures of 'skill' leave out?">
+
+Suppose a fund returns 20% in a year. Is that good?
+
+It depends entirely on what else was happening. If the broader market also returned 18% that year, the fund barely did anything distinctive — it mostly just *was* the market. If the market fell 10% that year, a 20% gain looks like something genuinely unusual happened. The raw number, on its own, tells you almost nothing.
+
+This is the problem that the concepts of *alpha* and *beta* were built to solve, both emerging from the Capital Asset Pricing Model developed by William Sharpe in the 1960s, with the related idea of a manager's "alpha" formalized a few years later by Michael Jensen — [work that became foundational enough to later earn a Nobel Prize](https://pubs.aeaweb.org/doi/pdf/10.1257/0895330042162340).
+
+*Beta* is the portion of a fund's return that comes simply from being exposed to the broader market's movements. A fund with a beta of 1 moves in lockstep with the market — when the market rises 10%, so does the fund, and vice versa. There's no particular skill involved in that; it's just exposure, the financial equivalent of being carried by the tide.
+
+*Alpha* is what's left over once you strip out beta — the portion of return that comes from the manager's own decisions, independent of which way the overall market happened to move. When a hedge fund says "we generate alpha," it's making a specific claim: that its returns reflect genuine skill, not just a rising tide and a portfolio that happens to float on it.
+
+The single number most commonly used to summarize this is the *Sharpe ratio*, named after the same William Sharpe. In plain terms, it measures how much extra return a fund earns above a risk-free baseline (like government bonds), divided by how much that return bounces around — its volatility. The intuition is: a fund that returns 20% with wild, unpredictable swings isn't obviously better than one that returns 12% smoothly; the Sharpe ratio is an attempt to put both on the same scale, as "return per unit of risk taken."
+
+As a rough industry convention — not a scientific threshold, just a widely shared rule of thumb — a Sharpe ratio below 1 is considered mediocre, somewhere between 1 and 2 is good, and above 2 starts to look exceptional. This is part of why Medallion's track record is so startling to people in finance: its [estimated Sharpe ratio has been above 2 for decades](https://www.cornell-capital.com/blog/2020/02/medallion-fund-the-ultimate-counterexample.html), a level that's normally seen, if at all, only in short bursts.
+
+But the Sharpe ratio has real limitations, and they're worth understanding precisely because they show up everywhere in how performance gets marketed.
+
+The first issue is that the Sharpe ratio assumes returns follow something like a normal, bell-curve distribution. Real financial markets don't: they have "fat tails," meaning extreme events — crashes, in particular — happen far more often than a bell curve would predict. A strategy can post an excellent Sharpe ratio for years and then lose a huge fraction of its value in a matter of days, a risk the ratio simply never saw coming because it had never occurred in the sample being measured.
+
+The second issue is that the Sharpe ratio treats *all* volatility as bad — including sudden unexpected gains. A fund that occasionally has spectacular upside surprises looks "riskier" by this measure than one with perfectly steady, modest returns, even though most investors would be delighted by the former kind of surprise. This is the motivation behind the *Sortino ratio*, a variant that only counts downside volatility — the swings investors actually worry about.
+
+The third issue is that the Sharpe ratio says nothing about *drawdown* — the largest peak-to-trough loss a fund has experienced. Two funds can have identical Sharpe ratios while one has never lost more than 5% from its peak and the other has, at some point, been down 30% before recovering. For many investors, that difference is the whole story. The *Calmar ratio* — annual return divided by maximum drawdown — was designed to capture exactly this.
+
+The fourth issue is the most uncomfortable one: the Sharpe ratio can be *gamed*, not through fraud, but through strategy choice. A strategy that systematically sells deep out-of-the-money options collects a small, steady stream of premiums almost every period — producing low measured volatility and a flattering Sharpe ratio — while quietly accumulating a small probability of a catastrophic loss that simply hasn't shown up yet in the data. The ratio looks great right up until the moment it very much isn't.
+
+And finally, the Sharpe ratio doesn't account for *liquidity*. Assets that aren't priced every day — certain private investments, some real estate, illiquid bonds — appear artificially smooth simply because nobody is marking them to a real-time price. Low measured volatility, in that case, reflects an absence of information rather than an absence of risk.
+
+Step back, and all of these metrics — alpha, beta, Sharpe, Sortino, Calmar — are attempts to answer one underlying question: *is this manager's edge real, or did we just happen to be looking at a lucky stretch of history?* That question turns out to be far harder than it sounds, and it sits at the center of everything that makes modern quantitative finance both powerful and unsettling. In the next part, we'll look at how quants try — and sometimes fail — to tell a genuine, repeatable pattern apart from a correlation that's really just noise, and what happens when even the people who built a model can no longer fully explain why it works.
+
+</QA>
