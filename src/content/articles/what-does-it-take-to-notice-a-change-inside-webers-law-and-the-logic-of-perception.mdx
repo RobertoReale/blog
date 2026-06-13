@@ -1,0 +1,132 @@
+---
+title: "What Does It Take to Notice a Change? Inside Weber's Law and the Logic of Perception"
+date: 2026-06-13T14:30:00
+tags: [psychology, cognition, economics]
+description: "A first-principles look at Weber's Law — the discovery that what counts as a noticeable change depends on where you start, and how that one ratio quietly shapes pricing, prison sentences, and the feeling that time speeds up with age."
+origin: "I stumbled on a Numberphile video where mathematician Hannah Fry runs a tiny experiment on her co-host: she hands him two weights, 100g and 120g, and he correctly picks out the heavier one. Then she swaps in 200g and 220g — exactly the same 20-gram gap — and this time he gets it wrong. That small failure is basically the whole article. The gap didn't change, but it stopped being noticeable the moment the starting point got bigger. Once I saw that pattern in a pair of weights, I couldn't stop seeing it everywhere else — in chocolate bars, in prices, in how a summer felt at age eight versus how one feels now."
+originPosition: "bottom"
+sources: [
+  { label: "Weber's law — Britannica", href: "https://www.britannica.com/science/Webers-law" },
+  { label: "Ernst Heinrich Weber — Britannica", href: "https://www.britannica.com/biography/Ernst-Heinrich-Weber" },
+  { label: "Weber–Fechner law — Wikipedia", href: "https://en.wikipedia.org/wiki/Weber%E2%80%93Fechner_law" },
+  { label: "Weber fraction — A Dictionary of Psychology, Oxford Reference", href: "https://www.oxfordreference.com/view/10.1093/oi/authority.20110803121529208" },
+  { label: "Stevens's power law — Wikipedia", href: "https://en.wikipedia.org/wiki/Stevens's_power_law" },
+  { label: "Punishment after Life: How Attitudes about Longer-than-Life Sentences Expose the Rules of Retribution — PMC", href: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11429324/" },
+  { label: "Are sentencing disparities unavoidable? Lessons from centralized judicial training — ScienceDirect", href: "https://www.sciencedirect.com/science/article/pii/S0047235225002314" },
+  { label: "Shrinkflation: Cadbury reduces size of Dairy Milk bars as inflation pressures hit — CityAM", href: "https://www.cityam.com/shrinkflation-cadbury-reduces-size-of-dairy-milk-bars-as-inflation-pressures-hit/" },
+  { label: "Why time flies as we get older — World Economic Forum", href: "https://www.weforum.org/stories/2015/07/why-time-flies-as-we-get-older/" },
+  { label: "Why Does Time Seem to Move Faster as We Grow Older? — Big Think", href: "https://bigthink.com/personal-growth/why-does-time-seem-to-move-faster-as-we-grow-older/" }
+]
+status: published
+language: "en"
+---
+
+<QA question="What does it actually mean to 'notice' a change in something?">
+
+Pick up two objects of slightly different weight, and at some point you stop being able to tell which one is heavier. That stopping point is not random, and it's not really about weight specifically — it's about a much more general feature of how perception works.
+
+Hold 100 grams in one hand and 120 grams in the other, and most people can immediately tell which is heavier — a 20-gram difference is easy to feel. But hold 200 grams and 220 grams, and that same 20-gram difference often disappears entirely. Nothing about the *size* of the gap changed. What changed is the size of the thing the gap is being compared against.
+
+This is the core idea behind what's called the **just noticeable difference**, or JND: the smallest change in a stimulus that a person can reliably detect. The surprising part isn't that a JND exists — it's that the JND isn't a fixed quantity. It's not "20 grams" or "5 grams" as an absolute number. Instead, it turns out to be a fixed *proportion* of whatever you started with.
+
+This proportional relationship is what's known as **Weber's law**. In its simplest form, it says that the change in stimulus intensity (ΔI) needed for a person to notice a difference is a constant fraction of the original stimulus intensity (I):
+
+ΔI / I = k
+
+Here, *k* is a constant — called the Weber fraction — that doesn't depend on how big or small I is, only on which sense is being tested. If k for weight discrimination is, say, 0.05 (5%), then a 100-gram weight needs to change by about 5 grams to be noticeable, while a 1-kilogram weight needs to change by about 50 grams — ten times the absolute amount, for the same *relative* change.
+
+This single idea — that perception tracks ratios, not absolute amounts — turns out to be one of the oldest, most replicated, and most quietly consequential findings in the history of psychology.
+
+[IMAGE: A simple before/after diagram showing two scale pans. Left pair: 100g vs 120g, with a clear visual "tilt" and a checkmark labeled "noticed." Right pair: 200g vs 220g, drawn perfectly level, with an X labeled "not noticed" — same 20g difference in both cases.]
+
+</QA>
+
+<QA question="Where does this idea come from, and why did anyone go looking for it?">
+
+The discovery is usually traced to **Ernst Heinrich Weber**, a German physiologist who spent most of his career, from 1818 to 1871, as a professor at the [University of Leipzig](https://www.britannica.com/biography/Ernst-Heinrich-Weber). Weber wasn't trying to build a grand theory of the mind — he was doing detailed, almost mundane experimental work on the physiology of touch, temperature, pressure, and the sense of weight.
+
+In 1834, in a Latin work usually referred to by its short title *De Tactu* ("On Touch"), [Weber described a series of experiments in which subjects judged differences between weights](https://www.britannica.com/science/Webers-law) they were asked to lift. Across these experiments, a consistent pattern emerged: the smallest difference a person could reliably detect wasn't a fixed weight — it scaled with the weight already being held. A heavier starting load required a proportionally heavier addition before anyone noticed anything had changed.
+
+At the time, this looked like a narrow finding about touch and muscle sense — useful, but limited. Its broader significance was recognized by one of Weber's students, **Gustav Theodor Fechner**. Fechner was trying to solve something much bigger: the centuries-old "mind-body problem," the question of how a physical world of stimuli (light, sound, pressure) connects to a subjective world of sensations (brightness, loudness, heaviness). In 1860, Fechner published *Elemente der Psychophysik* ("Elements of Psychophysics"), in which he took [Weber's empirical observation and built a mathematical theory on top of it](https://en.wikipedia.org/wiki/Weber%E2%80%93Fechner_law) — what's now usually called the **Weber-Fechner law**. This work is generally credited as the founding moment of psychophysics: the systematic study of the relationship between physical stimuli and the sensations they produce.
+
+It's a nice detail that none of this began as an attempt to explain the mind. It began with someone carefully measuring how much weight you'd have to add to a brick before someone holding it said "huh, that feels heavier now" — and noticing the answer depended entirely on how heavy the brick already was.
+
+</QA>
+
+<QA question="How does a simple ratio turn into the logarithmic curve everyone associates with this law?">
+
+Weber's law, on its own, is a statement about *thresholds*: it tells you the smallest detectable step at any given starting point. Fechner's contribution was to ask what happens if you take that idea and stack it — what does the *whole* relationship between stimulus and sensation look like, if every step up in sensation requires a proportionally bigger step up in stimulus?
+
+The answer is a logarithm. If each "just noticeable" increase in sensation corresponds to a fixed *percentage* increase in stimulus — rather than a fixed absolute increase — then sensation grows in proportion to the logarithm of the stimulus intensity. In Fechner's formulation, perceived intensity S relates to physical intensity I roughly as:
+
+S = k · log(I)
+
+The shape of this curve is intuitive once you see it: it rises steeply at low intensities and flattens out as intensity increases. Near the bottom of the curve, a small absolute change in stimulus corresponds to a large change in perceived sensation. Near the top, the same absolute change barely moves the curve at all. This is exactly the 100g/120g versus 200g/220g pattern from the first question, generalized into a continuous shape.
+
+[IMAGE: A graph with stimulus intensity on the x-axis and perceived sensation on the y-axis, showing a logarithmic curve. Mark two points near the bottom of the curve (100g and 120g) with a clearly visible vertical gap between them, and two points further along (200g and 220g) where the same horizontal gap produces almost no vertical gap.]
+
+One detail worth being honest about: the *exact* Weber fraction — the value of k — isn't a single universal number. It depends heavily on which sense is being measured, and different studies report somewhat different figures depending on methodology. But the broad pattern across senses is well established. According to one widely used reference, [the Weber fraction has been estimated at roughly 1/53 for weight discrimination, 1/62 for visual brightness, 1/11 for auditory loudness, and as small as 1/333 for auditory pitch](https://www.oxfordreference.com/view/10.1093/oi/authority.20110803121529208). In plain terms: human pitch perception is extraordinarily sensitive to relative change — we can detect tiny proportional shifts in a musical note — while our sense of loudness is comparatively coarse, needing a much larger relative change before we notice anything.
+
+[IMAGE: A simple horizontal bar chart comparing approximate Weber fractions across senses — pitch, brightness, weight, and loudness — visually showing how much smaller the "noticeable" proportional change is for pitch compared to loudness.]
+
+</QA>
+
+<QA question="What does this overturn about how we normally think perception works?">
+
+Most of us walk around with an implicit assumption that our senses report something like absolute measurements — that a gram is a gram, a dollar is a dollar, a decibel is a decibel, regardless of context. Weber's law says this is close to backwards. What our senses actually seem to track isn't the absolute size of a stimulus or a change, but its size *relative to a baseline*.
+
+This has a strange but important consequence: there is no such thing as "a noticeable change" in the abstract. The same 20-gram difference is obviously noticeable in one context and completely invisible in another, depending only on what it's being compared against. "Noticeable" is not a property of the change itself — it's a property of the *ratio* between the change and the baseline.
+
+There's also a smaller, more personal assumption this challenges: the idea that logarithms are some abstract mathematical trick invented to make big numbers more manageable — useful for things like the decibel scale, the Richter scale, or pH, but not something that has much to do with how *we* actually experience the world. Weber's law suggests the opposite. Logarithmic scaling isn't just a convenient notation humans invented to cope with huge ranges of stimuli — it appears to be close to the native format in which the nervous system actually encodes those stimuli in the first place. The "trick" isn't on the page; it's wired into perception itself.
+
+</QA>
+
+<QA question="Where does Weber's law stop being true?">
+
+Weber's law is one of the most replicated findings in experimental psychology, but it isn't a universal law of nature in the way, say, a conservation law in physics is. It's an empirical regularity that holds well across a *middle range* of stimulus intensities — and breaks down at the edges.
+
+[Weber's law has been shown not to hold at extremes of stimulation](https://www.britannica.com/science/Webers-law). Near the absolute threshold of detection — where a stimulus is so faint it's barely perceptible at all — the simple constant-ratio relationship tends to break down: thresholds in this region don't scale as cleanly as the law predicts. At very high intensities, similar deviations appear. The "constant k" in ΔI/I = k isn't quite constant once you push toward either end of the range.
+
+This is part of why, in 1957, the psychophysicist Stanley Smith Stevens proposed an alternative: rather than sensation scaling with the *logarithm* of stimulus intensity, [Stevens argued it scales as a power function](https://en.wikipedia.org/wiki/Stevens's_power_law) — sensation magnitude proportional to stimulus intensity raised to some exponent that depends on the sense being measured. A power function has a property a logarithm doesn't: it can pass smoothly through zero, which makes it better suited to describing perception near the very bottom of the intensity range, where a logarithmic curve becomes mathematically awkward (the logarithm of zero is undefined).
+
+Whether the "true" underlying relationship is logarithmic, a power function, or something else entirely is still discussed among psychophysicists — and the answer may partly depend on what's being measured and how. Weber's law and Fechner's logarithmic law tend to be associated with experiments where stimuli can only just barely be distinguished from one another, while Stevens' power law tends to come from a different kind of experiment, where people are asked to directly estimate how strong a sensation feels. These aren't quite the same question, which may be part of why they don't always produce the same answer.
+
+What's safe to say is narrower than "perception is logarithmic, full stop." It's closer to: across a wide and practically important middle range of everyday stimuli, the *proportional* nature of perceptual thresholds — the core insight Weber had in 1834 — holds up remarkably well, even if the precise mathematical curve built on top of it remains debated.
+
+</QA>
+
+<QA question="Where does this actually show up outside the laboratory?">
+
+The proportional nature of perception isn't just a curiosity confined to weight-lifting experiments — it shows up, often unrecognized, in some very ordinary corners of life.
+
+**Shrinking products without anyone noticing.** If the smallest change you can detect in a quantity is proportional to that quantity, then a manufacturer who wants to quietly reduce how much product is in a package has a built-in margin to work with: a reduction small enough, relative to the original size, to fall below what most people would consciously register. This is the mechanism behind what's now commonly called "shrinkflation." A well-documented example: in 2022, [Cadbury's parent company Mondelez reduced its Dairy Milk sharing bar from 200 grams to 180 grams — a 10% cut — while keeping the price the same, and this followed earlier reductions in 2011 and 2012, when a 140g bar became 120g and a 49g bar became 45g, again without a price change](https://www.cityam.com/shrinkflation-cadbury-reduces-size-of-dairy-milk-bars-as-inflation-pressures-hit/). None of this requires assuming any conscious appeal to "Weber's law" by anyone in a boardroom — but the *outcome* is exactly what the law would predict: proportionally modest reductions are far less likely to trigger a "wait, this feels different" reaction than the same absolute reduction applied to a smaller starting size would be.
+
+[COMIC: A four-panel comic showing the same person buying "their favorite chocolate bar" across several years. In each panel the bar is visibly a bit smaller and the price tag stays identical, but the person's expression doesn't change — until the final panel, where the bar is tiny and they finally look confused, surrounded by old wrappers showing the bar's original size.]
+
+The same logic extends to pricing more broadly: a price increase that represents a small *percentage* change is less likely to register as significant than the same percentage change applied to a cheaper item, even if the absolute amounts involved are wildly different. A few extra cents on a carton of milk is a larger relative jump — and so more likely to be noticed — than a much larger absolute increase on something that already costs a great deal.
+
+**Why sentencing options seem to cluster.** A different, and more consequential, place this pattern may show up is in how legal sentences get decided. Multiple studies have found that [judicial sentencing decisions tend to cluster around round and even numbers — a pattern interpreted as evidence of heuristic, rather than strictly calculated, processing](https://pmc.ncbi.nlm.nih.gov/articles/PMC11429324/), and a separate analysis of sentences issued under identical training conditions similarly found that [penalties followed a distinctly multimodal distribution, clustering around round numbers of months rather than spreading evenly across the available range](https://www.sciencedirect.com/science/article/pii/S0047235225002314).
+
+It's worth being careful about exactly what this evidence shows and doesn't show. What's documented is that sentences cluster around round numbers — 3 months, 6 months, 1 year, 2 years, 5 years, 10 years, 20 years — rather than being spread smoothly across all possible values. One interpretation, drawing on the same logic as Weber's law, is that the gap between "meaningfully different" sentence lengths might itself scale with the length of the sentence: the difference between 3 and 6 months may feel substantial, while the difference between 20 years and 20 years and 3 months may feel almost irrelevant, even though both differences are "3 months" in absolute terms. This is a plausible and evocative connection — but it's an *interpretive* one. The studies above document the clustering itself; they don't directly test whether it's driven by a Weber-like proportional perception of time, as opposed to other heuristics like anchoring on commonly cited reference sentences. Both explanations could be true at once, or the connection to Weber's law specifically could turn out to be looser than it first appears.
+
+[COMIC: A simple number line representing possible prison sentences, drawn with tick marks. At the low end (0–2 years) the tick marks are dense and evenly spaced — 1 month, 2 months, 3 months, 6 months, 1 year, 18 months. At the high end (10–30 years) the tick marks are sparse and far apart — 10, 15, 20, 25, 30 years, life. A small figure labeled "judge" stands at the dense end looking carefully between two close ticks, and at the sparse end barely glancing between two far-apart ones.]
+
+**Why time seems to speed up as you get older.** Perhaps the most personally familiar version of this pattern concerns the experience of time itself. One long-standing explanation for why a year seems to pass more quickly at 40 than it did at 8 is sometimes called the **proportional theory** of time perception: as [a year becomes a progressively smaller fraction of the total time a person has been alive, that same fixed unit — one year — comes to represent less of the "whole," and so feels like it occupies less](https://www.weforum.org/stories/2015/07/why-time-flies-as-we-get-older/). For a ten-year-old, a year is 10% of their entire life; for a fifty-year-old, it's 2%.
+
+It's important not to oversell this. Proportional theory is one of *several* explanations that have been proposed, and [other researchers point to factors like the density of novel, memorable experiences — which tend to cluster heavily in adolescence and early adulthood, sometimes called the "reminiscence bump" — as a separate or complementary mechanism, alongside theories involving changes in attention, routine, and even biological pacemakers like heart rate and metabolism](https://bigthink.com/personal-growth/why-does-time-seem-to-move-faster-as-we-grow-older/). No single explanation has been established as *the* answer, and it's entirely possible that several of these mechanisms operate together. What proportional theory contributes is a structural resemblance to Weber's law: both describe a fixed unit (a gram, a year) whose *perceived* size depends on the size of the reference frame it's being measured against.
+
+[IMAGE: A horizontal bar representing "a life," divided into segments. The segment representing "year 5" is large and clearly visible; the segment representing "year 50" is drawn as a barely-visible sliver at the same absolute width, illustrating how the same fixed unit occupies a shrinking proportion of the whole.]
+
+</QA>
+
+<QA question="What's still genuinely open here?">
+
+A few threads from this don't resolve neatly, and are worth sitting with rather than papering over.
+
+The first is internal to psychophysics itself: nearly two centuries after Weber's original experiments, there still isn't full agreement on the best mathematical description of the stimulus-sensation relationship across its full range — the logarithmic Weber-Fechner formulation, Stevens' power law, or something that reconciles the two depending on context. This isn't a sign that the underlying phenomenon is shaky; the *proportional* nature of perceptual thresholds is extremely well replicated. But the precise curve built on top of that observation remains an active area of debate rather than a settled fact.
+
+The second is about how far the *metaphor* of Weber's law can responsibly travel. It's tempting — and genuinely illuminating — to reach for "proportional perception" to explain why we don't notice shrinking chocolate bars, why prison sentences cluster at round numbers, or why time seems to accelerate with age. But these are all, in different ways, extensions of a principle that was originally measured for very simple physical stimuli like weight, brightness, and pitch, under tightly controlled experimental conditions. Whether the *same mechanism* is doing the work when the "stimulus" is something as abstract as "years of a human life" or "months of incarceration," rather than just a *similar pattern* arising for different underlying reasons, is genuinely unresolved.
+
+And the third is more practical: if proportional thresholds really do shape things like pricing decisions and sentencing patterns — whether through deliberate design or unconscious heuristics — what, if anything, follows from that? Awareness of a perceptual bias doesn't automatically neutralize it; people who know about shrinkflation can still fail to notice it happening to their own favorite products. Whether structures like sentencing guidelines or pricing regulation can be designed to *counteract* a tendency this deeply built into perception — rather than simply describing it after the fact — is its own open question, and one this article doesn't attempt to answer.
+
+</QA>
