@@ -36,7 +36,7 @@ The physical infrastructure is largely invisible today. Exchanges are essentiall
 
 This is the foundational thing to hold onto: a price is not a fact about an asset. It is an *agreement* between two parties, at a specific moment, reflecting their best current estimate of value. Every price is, at its root, an opinion expressed with money.
 
-[IMAGE: Simplified diagram of an order book — a column of buy orders (bids) stacked below a sell column (asks), with the current price at the crossing point.]
+<OrderBook />
 </QA>
 
 <QA question="How does new information get absorbed into a price?">
@@ -60,7 +60,7 @@ The *semi-strong form* says prices reflect all *publicly available* information:
 
 The *strong form* says prices reflect *all* information, including private information. This implies that even insider trading is futile — a version that is almost certainly false, which is exactly why insider trading is both profitable and illegal.
 
-[IMAGE: Three concentric circles labeled "Historical prices" (innermost), "All public information" (middle), "All information including private" (outermost) — representing the three forms of the EMH.]
+<EMHCircles />
 
 What the EMH does *not* say is that markets are always right, or that prices are always rational. It says that mispricings are corrected so quickly that they can't be systematically exploited by the time ordinary investors act on them. There is a crucial distinction between *perfect* efficiency and *sufficient* efficiency — and the EMH only claims the latter.
 
@@ -84,7 +84,6 @@ The EMH's most uncomfortable empirical problem is that financial bubbles demonst
 
 The field of *behavioral finance* — developed by researchers like [Daniel Kahneman](https://www.nobelprize.org/prizes/economic-sciences/2002/kahneman/facts/) and Amos Tversky — offers a partial answer. People are not the rational calculators that classical economics assumes. They suffer from systematic cognitive biases: overconfidence in their own predictions, *herding* (copying what other investors are doing because uncertainty makes imitation feel safe), loss aversion, and a deep tendency to extrapolate recent trends indefinitely. These biases are not random noise. They are predictable, directional, and can push prices away from fair value for years.
 
-[COMIC: An investor watching a price chart going nearly vertical, telling himself "the fundamentals are solid" while the chart spells out "THIS IS A BUBBLE" — which he cannot see.]
 
 There's also a deeper structural problem with the EMH, known as the [*Grossman-Stiglitz paradox*](https://www.jstor.org/stable/1805228), identified by economists Sanford Grossman and Joseph Stiglitz in 1980. Their argument: if markets were *perfectly* efficient, no one would have an incentive to gather and analyze information, because there would be no profit to be made from doing so. But if no one analyzes information, markets become inefficient. Therefore a perfectly efficient market is logically self-undermining — some degree of inefficiency must always exist, just enough to reward the analysts who keep prices aligned with reality.
 

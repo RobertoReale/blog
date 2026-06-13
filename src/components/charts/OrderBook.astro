@@ -1,0 +1,92 @@
+---
+---
+
+<figure class="chart-fig">
+  <svg viewBox="0 0 480 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Order book diagram">
+    <text x="120" y="18" text-anchor="middle" class="hdr-b">BUY ORDERS (BIDS)</text>
+    <text x="360" y="18" text-anchor="middle" class="hdr-a">SELL ORDERS (ASKS)</text>
+
+    <text x="60"  y="38" text-anchor="middle" class="col">QTY</text>
+    <text x="180" y="38" text-anchor="middle" class="col">PRICE</text>
+    <text x="300" y="38" text-anchor="middle" class="col">PRICE</text>
+    <text x="420" y="38" text-anchor="middle" class="col">QTY</text>
+
+    <line x1="240" y1="24" x2="240" y2="254" class="div-v"/>
+    <line x1="0"   y1="44" x2="480" y2="44"  class="div-h"/>
+
+    <rect x="8"   y="48"  width="228" height="26" rx="3" class="bid-bg"/>
+    <text x="60"  y="66"  text-anchor="middle" class="txt">500</text>
+    <text x="180" y="66"  text-anchor="middle" class="bid-p">99.80</text>
+
+    <rect x="8"   y="77"  width="228" height="26" rx="3" class="bid-bg" opacity=".6"/>
+    <text x="60"  y="95"  text-anchor="middle" class="txt">320</text>
+    <text x="180" y="95"  text-anchor="middle" class="bid-p">99.75</text>
+
+    <rect x="8"   y="106" width="228" height="26" rx="3" class="bid-bg" opacity=".3"/>
+    <text x="60"  y="124" text-anchor="middle" class="txt">180</text>
+    <text x="180" y="124" text-anchor="middle" class="bid-p">99.70</text>
+
+    <rect x="8"   y="135" width="464" height="30" rx="3" class="sp-bg"/>
+    <text x="240" y="155" text-anchor="middle" class="sp-t">&#8592; SPREAD $0.20 &#8594;&#160;&#160;&#160;last match: $99.90</text>
+
+    <rect x="244" y="168" width="228" height="26" rx="3" class="ask-bg"/>
+    <text x="300" y="186" text-anchor="middle" class="ask-p">100.00</text>
+    <text x="420" y="186" text-anchor="middle" class="txt">210</text>
+
+    <rect x="244" y="197" width="228" height="26" rx="3" class="ask-bg" opacity=".6"/>
+    <text x="300" y="215" text-anchor="middle" class="ask-p">100.05</text>
+    <text x="420" y="215" text-anchor="middle" class="txt">145</text>
+
+    <rect x="244" y="226" width="228" height="26" rx="3" class="ask-bg" opacity=".3"/>
+    <text x="300" y="244" text-anchor="middle" class="ask-p">100.10</text>
+    <text x="420" y="244" text-anchor="middle" class="txt">80</text>
+  </svg>
+  <figcaption>
+    A simplified order book. Buy orders (bids) on the left, sell orders (asks) on the right. The spread is the gap between the best bid and best ask — the last matched price sits within it.
+  </figcaption>
+</figure>
+
+<style>
+  .chart-fig {
+    text-align: center;
+    margin: 2rem 0;
+  }
+  .chart-fig svg {
+    max-width: 540px;
+    width: 100%;
+    display: block;
+    margin: 0 auto;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+  .chart-fig figcaption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--color-muted);
+    margin-top: 8px;
+  }
+  .hdr-b  { fill: #15803d; font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+  .hdr-a  { fill: #b91c1c; font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+  .col    { fill: #9ca3af; font-size: 10px; }
+  .txt    { fill: #1f2937; font-size: 13px; }
+  .bid-p  { fill: #166534; font-size: 13px; font-weight: 600; }
+  .ask-p  { fill: #991b1b; font-size: 13px; font-weight: 600; }
+  .sp-t   { fill: #374151; font-size: 11px; font-weight: 600; }
+  .div-v  { stroke: #e5e7eb; stroke-width: 1; }
+  .div-h  { stroke: #e5e7eb; stroke-width: 1; }
+  .bid-bg { fill: #dcfce7; }
+  .ask-bg { fill: #fee2e2; }
+  .sp-bg  { fill: #f9fafb; stroke: #e5e7eb; stroke-width: 1; }
+
+  :global([data-theme="dark"]) .hdr-b  { fill: #4ade80; }
+  :global([data-theme="dark"]) .hdr-a  { fill: #f87171; }
+  :global([data-theme="dark"]) .col    { fill: #6b7280; }
+  :global([data-theme="dark"]) .txt    { fill: #f3f4f6; }
+  :global([data-theme="dark"]) .bid-p  { fill: #86efac; }
+  :global([data-theme="dark"]) .ask-p  { fill: #fca5a5; }
+  :global([data-theme="dark"]) .sp-t   { fill: #d1d5db; }
+  :global([data-theme="dark"]) .div-v  { stroke: #374151; }
+  :global([data-theme="dark"]) .div-h  { stroke: #374151; }
+  :global([data-theme="dark"]) .bid-bg { fill: #14532d; }
+  :global([data-theme="dark"]) .ask-bg { fill: #450a0a; }
+  :global([data-theme="dark"]) .sp-bg  { fill: #1f2937; stroke: #374151; }
+</style>

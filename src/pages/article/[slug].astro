@@ -10,6 +10,8 @@ import Sources from '../../components/mdx/Sources.astro';
 import Origin from '../../components/mdx/Origin.astro';
 import QA from '../../components/mdx/QA.astro';
 import ImageWithCaption from '../../components/mdx/ImageWithCaption.astro';
+import OrderBook from '../../components/charts/OrderBook.astro';
+import EMHCircles from '../../components/charts/EMHCircles.astro';
 import { formatDate } from '../../utils/formatDate';
 import { getReadingTime } from '../../utils/readingTime';
 import { slugify } from '../../utils/slugify';
@@ -215,7 +217,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
     <div data-pagefind-ignore><TOC /></div>
 
     <div class="prose">
-      <Content components={{ QA, Origin, ImageWithCaption, Sources }} />
+      <Content components={{ QA, Origin, ImageWithCaption, Sources, OrderBook, EMHCircles }} />
     </div>
 
 

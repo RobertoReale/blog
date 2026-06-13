@@ -1,0 +1,60 @@
+---
+---
+
+<figure class="chart-fig">
+  <svg viewBox="0 0 400 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three forms of the Efficient Market Hypothesis">
+    <circle cx="200" cy="200" r="170" class="c-outer"/>
+    <circle cx="200" cy="200" r="115" class="c-mid"/>
+    <circle cx="200" cy="200" r="65"  class="c-inner"/>
+
+    <text x="200" y="48"  text-anchor="middle" class="lbl-outer">STRONG FORM</text>
+    <text x="200" y="63"  text-anchor="middle" class="sub">All information, incl. private</text>
+
+    <text x="200" y="103" text-anchor="middle" class="lbl-mid">SEMI-STRONG FORM</text>
+    <text x="200" y="118" text-anchor="middle" class="sub">All public information</text>
+
+    <text x="200" y="195" text-anchor="middle" class="lbl-inner">WEAK FORM</text>
+    <text x="200" y="211" text-anchor="middle" class="sub">Historical prices</text>
+  </svg>
+  <figcaption>
+    The three forms of the Efficient Market Hypothesis. Each outer ring subsumes everything inside it, reflecting progressively stronger claims about what information is already priced in.
+  </figcaption>
+</figure>
+
+<style>
+  .chart-fig {
+    text-align: center;
+    margin: 2rem 0;
+  }
+  .chart-fig svg {
+    max-width: 400px;
+    width: 100%;
+    display: block;
+    margin: 0 auto;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+  .chart-fig figcaption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--color-muted);
+    margin-top: 8px;
+  }
+
+  .c-outer { fill: #fce7f3; stroke: #db2777; stroke-width: 1.5; }
+  .c-mid   { fill: #ede9fe; stroke: #7c3aed; stroke-width: 1.5; }
+  .c-inner { fill: #dbeafe; stroke: #3b82f6; stroke-width: 1.5; }
+
+  .lbl-outer { fill: #9d174d; font-size: 12px; font-weight: 700; }
+  .lbl-mid   { fill: #5b21b6; font-size: 12px; font-weight: 700; }
+  .lbl-inner { fill: #1d4ed8; font-size: 12px; font-weight: 700; }
+  .sub       { fill: #6b7280; font-size: 11px; }
+
+  :global([data-theme="dark"]) .c-outer { fill: #831843; stroke: #f0abfc; }
+  :global([data-theme="dark"]) .c-mid   { fill: #2e1065; stroke: #a855f7; }
+  :global([data-theme="dark"]) .c-inner { fill: #1e3a5f; stroke: #60a5fa; }
+
+  :global([data-theme="dark"]) .lbl-outer { fill: #f0abfc; }
+  :global([data-theme="dark"]) .lbl-mid   { fill: #c4b5fd; }
+  :global([data-theme="dark"]) .lbl-inner { fill: #93c5fd; }
+  :global([data-theme="dark"]) .sub       { fill: #9ca3af; }
+</style>
