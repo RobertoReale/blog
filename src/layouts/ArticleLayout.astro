@@ -44,6 +44,7 @@ const jsonLd = {
       <meta name="twitter:image" content={`${SITE.url}${coverImage}`} />
     )}
     <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
   </Fragment>
   <div id="progress-bar"></div>
   <script is:inline>
