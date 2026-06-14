@@ -1,0 +1,351 @@
+---
+title: "After the Articles: an Open Source Arc, Two Fixes, and the Updated Setup Guide"
+date: 2026-06-14
+tags: ["open-source", "ai", "mcp", "travel", "automation", "fli", "trvl"]
+description: "What happened after Part 2 published: the maintainer read it, opened an issue, shipped two fixes in 48 hours, and cited three follow-up issues. Plus an honest updated setup guide — without the package that never existed."
+status: "published"
+language: "en"
+series: "budget-travel-pipeline"
+part: 3
+sources:
+  - label: "MikkoParkkola/trvl v1.9.2 — release that closed the loop"
+    href: "https://github.com/MikkoParkkola/trvl/releases/tag/v1.9.2"
+  - label: "RobertoReale/fli — fork with --min-duration / --max-duration"
+    href: "https://github.com/RobertoReale/fli"
+  - label: "RobertoReale/travel-search — the verified-price script"
+    href: "https://github.com/RobertoReale/travel-search"
+  - label: "trvl issue #167 — docs: surface find_trip_window, multi-pax, verified-accommodation"
+    href: "https://github.com/MikkoParkkola/trvl/issues/167"
+  - label: "trvl issue #168 — hotels: link-durability"
+    href: "https://github.com/MikkoParkkola/trvl/issues/168"
+  - label: "trvl issue #170 — cli: expose --min-duration/--max-duration on 'trvl dates'"
+    href: "https://github.com/MikkoParkkola/trvl/issues/170"
+---
+
+## Where Parts 1 and 2 left off
+
+[Part 1](/article/building-a-budget-travel-pipeline) built a flexible flight search pipeline by forking [`fli`](https://github.com/RobertoReale/fli) to add `--min-duration` and `--max-duration`, then wiring it to an AI agent via MCP. [Part 2](/article/budget-travel-pipeline-applied) ran the whole thing — flights, accommodation, price verification — and documented the gap that makes the pipeline unreliable if you skip it: the free [`trvl`](https://github.com/MikkoParkkola/trvl) prices are Google Hotels teasers, not bookable rates. A hotel listed at €46/night was €269 on Booking.com for the same dates and party. The gap is not occasional; it is structural.
+
+Eight days after Part 2 published, the maintainer opened an issue.
+
+---
+
+## The arc
+
+[Mikko Parkkola](https://github.com/MikkoParkkola), who built `trvl`, found the article and opened issue #1 on this blog's repo asking for a retest against a newer version. The framing was direct: the verification paths had changed since what I'd tested; were the same gaps still there?
+
+The retest protocol: same destination (Ischia, 2026-07-30 → 2026-08-04, 2 adults, 5 nights, EUR), every command tested systematically, compared against [`serpapi_verified.py`](https://github.com/RobertoReale/travel-search)'s reference output, results reported exactly — including when something broke. This is the only thing that makes a retest useful to a maintainer: reproducible facts, not impressions.
+
+**Turn 1.** Retest report sent June 12. The gap had narrowed substantially — from ~5.8× (original article) to ~1.4× — but remained consequential for a decision-making pipeline. Two blockers: `prices: null` in the `trvl serpapi` output for all hotels, and `trvl rooms` failing on every Ischia property (no Google place IDs for island hotels in the index).
+
+**Turn 2 (< 24h).** Mikko shipped v1.9.1. The fix: when SerpAPI is configured, `trvl prices` now does a list → detail call sequence, recovering per-provider data where v1.8.0 returned `providers: null`. For Hotel Continental Mare, that meant 10 verified provider rows instead of nothing. He also fixed the fallback safety: a broad city string could no longer silently match to an unrelated lead-in price.
+
+**Turn 3.** Retesting v1.9.1, one command broke in a new way. The name-based fallback — querying `trvl prices` by hotel name instead of a Google place ID, with SerpAPI active — resolved to a completely wrong hotel:
+
+```bash
+trvl prices "Hotel Villa Maria" --location "Sant Angelo Ischia Italy" \
+  --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json
+```
+
+v1.9.1 returned `"name": "Miramare Sea Resort & Spa"` — a different 5-star resort — with 9 "verified" providers at €2,336–€2,830. In v1.8.0, this had returned `providers: null`. The new SerpAPI path made the failure louder: instead of safe silence, confident wrong prices for the wrong property. An AI agent consuming `providers[0].price` without also checking `name` would act on a figure 2–3× too high, for a hotel it hadn't asked for.
+
+**Turn 4 (same day).** Mikko confirmed the mechanism and shipped v1.9.2. The fix: the name-based fallback now compares the requested property name against the returned property name; if they don't match, it returns `providers: null` rather than presenting a different hotel as booking-ready. A regression test pinned on the exact case.
+
+The v1.9.2 retest result was better than `providers: null`:
+
+```bash
+trvl prices "Hotel Villa Maria" --location "Sant Angelo Ischia Italy" \
+  --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json
+```
+
+v1.9.2 returned `"name": "Hotel Villa Maria Sant'Angelo d'Ischia"` — the correct property — with 13 verified providers ranging €620–€1,274. The fix doesn't just reject mismatches: the name matching now resolves correctly when the hotel exists. Miramare Sea Resort & Spa no longer passes; the real Hotel Villa Maria does.
+
+Closing comment from Mikko: *"This is the kind of report that makes the tool genuinely safer for an agent pipeline."*
+
+---
+
+## What changed: v1.8.0 → v1.9.1 → v1.9.2
+
+| Fix | v1.8.0 | v1.9.1 | v1.9.2 |
+|-----|--------|--------|--------|
+| `trvl prices` with valid Google place ID + SerpAPI | `providers: null` | ✅ per-provider matrix | ✅ per-provider matrix |
+| Trust labeling (`price_basis` / `price_confidence`) | absent | ✅ `lead_in / unverified` on free results | ✅ same |
+| Provider breakdown in `trvl serpapi` | null for all | ✅ ~50% (those with `property_token`) | ✅ same |
+| Fallback safety (generic city string) | silent wrong match | ✅ `providers: null` + notice | ✅ same |
+| `€` encoding in string fields | broken (`Ôé¼`) | ✅ fixed | ✅ same |
+| Name-based fallback with SerpAPI active | `providers: null` (safe) | ❌ wrong hotel, "verified" | ✅ correct hotel or `providers: null` |
+
+The v1.9.2 change is in the last row. It's the one that matters most for an agent pipeline where the model may call `trvl prices "Hotel Name"` rather than `trvl prices <place_id>`.
+
+---
+
+## Three issues
+
+After the fix landed, Mikko opened three issues crediting the findings:
+
+| Issue | What | Why it matters for this pipeline |
+|-------|------|----------------------------------|
+| **[#167](https://github.com/MikkoParkkola/trvl/issues/167)** | Docs: surface `find_trip_window`, multi-pax, verified-accommodation path | `find_trip_window` already exists in trvl — the tool Roberto forked `fli` to add, not knowing trvl had it. Better docs would have made the fork unnecessary from day one. |
+| **[#168](https://github.com/MikkoParkkola/trvl/issues/168)** | Hotels: link-durability — drop dead `aclk`/`clk` redirects, emit durable Booking.com fallback | The link-expiry problem from Part 2. When it lands, reliable booking links from trvl directly. |
+| **[#170](https://github.com/MikkoParkkola/trvl/issues/170)** | CLI: expose `--min-duration`/`--max-duration` on `trvl dates` | Literally the same feature from the fli fork, coming natively to trvl. |
+
+If #167 and #170 land together, the pipeline simplifies: one binary for flights and accommodation with duration-bounded search, no fork needed. #168 eliminates the main reason to reach for `serpapi_verified.py`'s `--check-links` mode. None of this is there yet; it is the direction the issues point.
+
+---
+
+## One correction from Part 2
+
+Part 2 described `hotel-rates-mcp` as a packaged MCP server you could install with `pip` and wire into `.mcp.json`. That package has not been published. The actual implementation is [`serpapi_verified.py`](https://github.com/RobertoReale/travel-search) in the `travel-search` repo — a standalone script, not an MCP tool. The aspiration was real; the package wasn't built before the article went out.
+
+The guide below doesn't reference it. `serpapi_verified.py` is a post-processing step you run after the agent, not a tool the agent calls.
+
+---
+
+## The complete setup guide: as of 2026-06-14, trvl v1.9.2
+
+The overall structure from Part 2 is still correct. What changed: the `.mcp.json` (one fewer server), the verification step in the prompt (no `hotel-rates` tool), and the note on name-based lookups.
+
+### What you need
+
+- Python 3.9+, Node 18+ (for MCP server wiring)
+- `fli` from the fork (upstream PRs still open — the fork is still required)
+- `trvl` v1.9.2+
+- A free SerpAPI key: [serpapi.com](https://serpapi.com/) — 250 searches/month, no credit card
+
+### Install
+
+**fli, from the fork:**
+
+```bash
+pip install git+https://github.com/RobertoReale/fli.git@feature/window-duration
+fli dates --help    # verify --min-duration and --max-duration appear
+```
+
+*Windows only:* `set PYTHONIOENCODING=utf-8` before any `fli` command to avoid encoding errors on destination names.
+
+**trvl v1.9.2:**
+
+```bash
+# macOS
+brew install MikkoParkkola/trvl/trvl
+brew upgrade trvl
+trvl version   # should print 1.9.2
+```
+
+Windows: download `trvl_1.9.2_windows_amd64.tar.gz` from the [v1.9.2 release](https://github.com/MikkoParkkola/trvl/releases/tag/v1.9.2), extract, put `trvl.exe` on your PATH.
+
+**SerpAPI key:**
+
+```bash
+export SERPAPI_KEY="your_key_here"
+# PowerShell: $env:SERPAPI_KEY="your_key_here"
+```
+
+### Folder structure
+
+```
+~/summer-vacation/
+├── .mcp.json
+└── results/
+```
+
+### `.mcp.json`
+
+Two servers: `fli` and `trvl`. Drop the `hotel-rates` server from Part 2 — it referenced a package that hasn't been published:
+
+```json
+{
+  "mcpServers": {
+    "fli": { "command": "fli-mcp" },
+    "trvl": { "command": "trvl", "args": ["mcp"] }
+  }
+}
+```
+
+Set `SERPAPI_KEY` in your environment *before* launching the agent. Then:
+
+```bash
+cd ~/summer-vacation
+claude
+```
+
+Run `/mcp` — both `fli` and `trvl` should show `connected`.
+
+### Which command does what
+
+| What you want | Command | Notes |
+|---------------|---------|-------|
+| Flights — all date combinations in a window | `fli dates BGY-NAP --from 2026-07-22 --to 2026-08-01 --min-duration 5 --max-duration 5` | From the fork. The agent calls `search_dates` via MCP. |
+| Hotels — verified prices for ranking | `trvl serpapi "Ischia" --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json` | Use this, not `trvl hotels`. Routes through SerpAPI; prices are real. |
+| Hotels — per-provider matrix + OTA links | `trvl prices <google_place_id> --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json` | Needs place ID from `trvl hotels --format json`. Best native path for the booking step. |
+| Deeplinks, tax-aware, link-validated | `python serpapi_verified.py "Ischia" 2026-07-30 2026-08-04 --adults 2 --top 8` | Post-processing, not an agent tool. From [travel-search](https://github.com/RobertoReale/travel-search). |
+
+**Do not use `trvl hotels` for any price you rank on.** It returns Google Hotels teasers — the list-preview minimum, not what you'll pay. Use `trvl serpapi` instead: it costs one SerpAPI search per query and returns verified prices.
+
+### Verification tiers
+
+Three levels, each costs more quota:
+
+**Tier 1 — `trvl serpapi`** returns verified list-level prices via SerpAPI. `price_confidence: verified` per hotel. About half the hotels also have a `property_token`, enabling a detail call with per-provider breakdown. The other half get a verified total but no OTA breakdown. Good for ranking across many hotels quickly.
+
+**Tier 2 — `trvl prices <place_id>`** returns the per-provider matrix with individual OTA links, if you have the Google place ID. Get it from `trvl hotels --format json`. This is the best native path for the final booking step: verified total *and* links to the actual OTA listings.
+
+**Tier 3 — `serpapi_verified.py`** calls SerpAPI list + detail per hotel, recovers per-provider totals and booking deeplinks, ranks on the tax-inclusive total, flags providers that add tax at checkout, HTTP-validates links. Works for hotels without a place ID. Run it after the agent to get the most reliable booking links before committing.
+
+For island destinations in peak season (Ischia and similar): `trvl rooms` still fails — most hotels don't appear in the Google place-ID index. Use tier 3 for those.
+
+### Name-based lookup: safe in v1.9.2, but still not the automation path
+
+The v1.9.2 fix means `trvl prices "Hotel Name" --location "..."` now either resolves correctly or returns `providers: null`. It's no longer dangerous. But for an automated pipeline, `trvl prices <place_id>` remains the right call when you have the ID — a name lookup adds a fuzzy-match step that a place ID skips. Use the name path for one-off lookups or when no place ID is available; use the ID path for anything unattended.
+
+---
+
+## The prompt
+
+The four-step template from Part 2 is still valid. Two changes from that version: the `.mcp.json` has one fewer server, and the verification in Step 2 uses `trvl serpapi` instead of the `hotel-rates` tool.
+
+A no-code prompt builder is in [`prompt-builder.html`](https://github.com/RobertoReale/travel-search/blob/master/prompt-builder.html) in the `travel-search` repo — open it in a browser, fill in the form, copy the generated prompt. The builder was written against the Part 2 template and still includes the `hotel-rates` step; use the prompt below instead until it's updated.
+
+```
+Budget travel pipeline
+
+TRIP VARIABLES
+- Departure airports: [e.g. BGY, MXP, LIN] (fli needs airport codes, search each as a separate roundtrip)
+- Overall availability: [e.g. Jul 22 – Aug 6] (earliest you can leave – latest you must be back)
+- Stay duration: [e.g. 5] nights
+- Travellers / Guests: [e.g. 2] adults
+- Outbound flight from home: [e.g. before 16:00]
+- Return flight from destination: [e.g. after 16:00]
+
+ADVANCED FILTERS (Optional - Remove or modify as needed)
+
+[Flights]
+- Flight Stops: [e.g. NON_STOP, ONE_STOP, or ANY]
+- Flight Class: [e.g. ECONOMY, BUSINESS]
+- Airlines (Include/Exclude): [e.g. Exclude FR, Include U2]
+- Airline Alliances: [e.g. SKYTEAM, STAR_ALLIANCE, ONEWORLD]
+- Layover limits: [e.g. max 120 minutes]
+
+[Accommodation - General]
+- Property Type: [hotel, apartment, hostel, resort, bnb, villa, or ANY]
+- Room Type: [entire_home, private_room, shared_room, hotel_room, or ANY]
+- Quality minimums: [e.g. 3 stars, 8.0/10 user rating]
+- Max budget: [e.g. max €150/night]
+- Max distance from center: [e.g. 5 km]
+
+[Accommodation - Perks & Rules]
+- Meal Plan: [e.g. breakfast included, or ANY]
+- Cancellation: [e.g. free cancellation only]
+- Eco-certified: [e.g. TRUE or FALSE]
+
+[Accommodation - Rentals specific (Airbnb/Apartments)]
+- Minimum layout: [e.g. 2 bedrooms, 1 bathroom]
+- Superhost only: [e.g. TRUE or FALSE]
+
+[Accommodation - Verification & Safety]
+- Trusted Providers (OTA Whitelist): [e.g. "Booking.com, Expedia.com" or "ALL"]
+- Verify Links: [e.g. TRUE (drop dead links)]
+
+DESTINATIONS (sea/beach access only)
+- [IATA] ([City]) — [transit note, e.g. "ferry to Ischia ~1 hr"]
+- [IATA] ([City]) — [access note]
+...
+
+Step 1 — Flights (fli MCP server)
+Using the TRIP VARIABLES and ADVANCED FILTERS above:
+- Search each Departure airport as a separate roundtrip using the search_dates tool.
+- Calculate the outbound search window: start date = start of Overall availability. end date =
+  end of Overall availability MINUS Stay duration. (e.g. If availability ends Aug 6 and stay
+  is 5 nights, your end date is Aug 1).
+- Map Stay duration, Travellers, and time preferences to the tool's arguments.
+- Apply all specified [Flights] filters (Stops, Class, Airlines, Alliances, Layover) to the tool.
+- Multiply the single adult fare by Travellers for the trip total.
+Sort by cheapest roundtrip. Save all results to results/flights.md.
+
+Step 2 — Accommodation (trvl MCP server, run searches in parallel)
+For the top [e.g. 5] flight options, search accommodation at the actual destination:
+- Guests: use Travellers variable.
+- Dates: check-in = outbound flight date, check-out = return flight date.
+- Use trvl serpapi (not trvl hotels). SERPAPI_KEY must be set in the environment.
+  The free trvl hotels prices are Google Hotels teasers — do not rank on them.
+  trvl serpapi returns SerpAPI-verified prices (price_confidence: verified).
+- Filters: apply all [Accommodation] preferences natively where the tool supports them.
+- Rank on the SerpAPI-verified total, never the per-night teaser.
+- If a Google place ID is available for a shortlisted hotel (from trvl hotels --format json
+  output), use trvl prices <place_id> to get the per-provider breakdown with OTA links.
+- Note which hotels return providers: null — those need serpapi_verified.py as a
+  post-processing step for reliable booking deeplinks.
+- Budget: apply max budget to verified total ÷ nights.
+
+Save raw results per date window to results/hotels_[dates].json.
+
+Step 3 — Evaluate
+
+a) Anomalies: flag any result that bypassed the filters (e.g. a B&B appearing
+   under a hotel/3-star filter, or a 0-star property passing a star minimum).
+   Keep in the JSON for reference; exclude from the final ranking.
+
+b) Price & tax: rank on the verified TOTAL (taxes included), never the per-night
+   teaser. Prefer the all-in provider (Booking.com quotes taxes in; some others
+   add them at checkout — flag those). Any local tourist tax (e.g. city tax) is paid in
+   cash at the property, is in no online total, and is the same for every provider —
+   note it as a separate cash cost, but do not estimate a figure or fold it into the ranking.
+   Discard any hotel whose only links are vacation-rental redirects (google.com/travel/clk)
+   that 404 — keep working OTA links.
+
+c) Verify: web-search each candidate. Confirm it is currently operating. Collect
+   review highlights — cleanliness, noise levels, distance from sea, recurring
+   complaints.
+
+d) Location: for each hotel, note which part of the destination it is in, distance
+   to the nearest beach, and distance to the ferry port or airport. Assess
+   whether the position suits a sea-access trip.
+
+Step 4 — Final output
+
+Rank all combinations by total trip cost (flight + verified accommodation total).
+Exclude any option with a critical red flag. Present the top [N_FINAL] valid
+options only — do not include filtered-out results in the final report.
+
+For each valid option include:
+- Total cost (flight + verified hotel total, itemised; note any property-collected
+  tourist tax separately as a cash cost, without inventing a figure)
+- Hotel: rating, review count, star category, key amenities
+- Location: neighbourhood · minutes to nearest beach · minutes to ferry/transit
+- Agent verdict (one sentence)
+- Google Flights link for the flight
+- Working per-provider hotel booking link (an OTA link that lands on the rate —
+  not a generic search page, not a vacation-rental redirect)
+
+Export to results/final-results.md.
+```
+
+---
+
+## What still doesn't work
+
+**`trvl rooms` on Italian islands.** Most Ischia hotels don't appear in the Google place-ID index. No place ID means no per-provider matrix from `trvl prices`. Use `trvl serpapi` for pricing and `serpapi_verified.py` for booking links.
+
+**~50% property_token coverage.** SerpAPI returns `property_token` for roughly half the properties in a list result. For the other half, `trvl serpapi` returns a verified total but no per-provider breakdown — just the minimum across providers. `serpapi_verified.py` makes its own detail call and covers more hotels, but coverage still isn't 100%.
+
+**Booking links expire.** Google Hotels ad-click links (`aclk`, `travel/clk`) have a shelf life of hours to a couple of days. Issue #168 will add durable Booking.com fallback links to `trvl` natively. Until it lands: `serpapi_verified.py --check-links` HTTP-validates links and drops the dead ones; it also emits a stable Booking.com deep-link as a fallback.
+
+**The teaser remains in `trvl hotels`.** `trvl hotels` still returns the teaser price — that's what the command is for: discovery (which hotels exist in the area), not pricing. The distinction is: `trvl hotels` for the list, `trvl serpapi` for the verified price, `trvl prices <place_id>` for the per-provider booking step.
+
+---
+
+## What the arc felt like
+
+A blog article with a reproducible problem led to a maintainer issuing two releases in 48 hours and opening three follow-up issues citing the findings by name. That is not exceptional — it is what open source looks like when it works. The maintainer gets accurate, reproducible data. The reporter gets a tool that's more trustworthy. The issues document the broader problem space for anyone who hits the same thing later.
+
+This was a first open source contribution arc: not a code PR, but a structured field report that became a regression test and three open issues. The same tool is now safer for everyone who uses it in an agent pipeline. The medium of contribution turned out to be the article itself.
+
+---
+
+## Caveats
+
+All of these tools reverse-engineer internal endpoints that can change without notice. Using them sits in a legal grey area — most platforms prohibit automated access in their terms of service. Use them for personal research.
+
+LLMs are non-deterministic. The same prompt run twice may produce different tool call sequences, query a different subset of destinations, or occasionally skip a route. Prices reflect the moment the search ran — a verified `trvl serpapi` total is accurate at that instant, not locked.
+
+The `fli` fork is required as long as [PR #195](https://github.com/punitarani/fli/pull/195) is open upstream. If it merges, install from the upstream repo instead. If trvl issues #167 and #170 land together, the fli dependency may drop entirely — `trvl dates` would cover the duration-constrained search the fork adds, and the pipeline simplifies to one binary.
