@@ -2,7 +2,7 @@
 title: "After the Articles: an Open Source Arc, Two Fixes, and the Updated Setup Guide"
 date: 2026-06-14
 tags: ["open-source", "ai", "mcp", "travel", "automation", "fli", "trvl"]
-description: "What happened after Part 2 published: the maintainer read it, opened an issue, shipped two fixes in 48 hours, and cited three follow-up issues. Plus an honest updated setup guide — without the package that never existed."
+description: "What happened after Part 2 published: the maintainer read it, opened an issue, shipped two fixes in 48 hours, and opened five follow-up issues — all of which shipped as merged PRs on main. Plus an honest updated setup guide — without the package that never existed."
 status: "published"
 language: "en"
 series: "budget-travel-pipeline"
@@ -20,6 +20,16 @@ sources:
     href: "https://github.com/MikkoParkkola/trvl/issues/168"
   - label: "trvl issue #170 — cli: expose --min-duration/--max-duration on 'trvl dates'"
     href: "https://github.com/MikkoParkkola/trvl/issues/170"
+  - label: "trvl PR #172 — AGENTS.md + pipeline ROADMAP"
+    href: "https://github.com/MikkoParkkola/trvl/pull/172"
+  - label: "trvl PR #173 — link-durability triage (native)"
+    href: "https://github.com/MikkoParkkola/trvl/pull/173"
+  - label: "trvl PR #174 — --min-duration/--max-duration on trvl dates"
+    href: "https://github.com/MikkoParkkola/trvl/pull/174"
+  - label: "trvl PR #175 — tourist_tax_note + tax_added_at_checkout fields"
+    href: "https://github.com/MikkoParkkola/trvl/pull/175"
+  - label: "trvl PR #176 — README Independent coverage section"
+    href: "https://github.com/MikkoParkkola/trvl/pull/176"
 ---
 
 ## Where Parts 1 and 2 left off
@@ -89,7 +99,25 @@ After the fix landed, Mikko opened three issues crediting the findings:
 | **[#168](https://github.com/MikkoParkkola/trvl/issues/168)** | Hotels: link-durability — drop dead `aclk`/`clk` redirects, emit durable Booking.com fallback | The link-expiry problem from Part 2. When it lands, reliable booking links from trvl directly. |
 | **[#170](https://github.com/MikkoParkkola/trvl/issues/170)** | CLI: expose `--min-duration`/`--max-duration` on `trvl dates` | Literally the same feature from the fli fork, coming natively to trvl. |
 
-If #167 and #170 land together, the pipeline simplifies: one binary for flights and accommodation with duration-bounded search, no fork needed. #168 eliminates the main reason to reach for `serpapi_verified.py`'s `--check-links` mode. None of this is there yet; it is the direction the issues point.
+All three shipped as merged PRs on main, along with two additional ones. The next section covers what each did.
+
+---
+
+## What landed: v1.10 batch on main
+
+All five PRs merged by end of 2026-06-14, pending the v1.10 release tag.
+
+| PR | Issue | What it does |
+|----|-------|-------------|
+| **[#172](https://github.com/MikkoParkkola/trvl/pull/172)** | [#167](https://github.com/MikkoParkkola/trvl/issues/167) | `find_trip_window`, multi-pax, and the full one-binary pipeline path documented in `AGENTS.md`. `ROADMAP.md` added. |
+| **[#173](https://github.com/MikkoParkkola/trvl/pull/173)** | [#168](https://github.com/MikkoParkkola/trvl/issues/168) | Link triage native: strips `travel/clk` vacation-rental redirects, tags links `stable` vs `expiring`, always emits a durable Booking.com deep-link as `booking_fallback_url`. |
+| **[#174](https://github.com/MikkoParkkola/trvl/pull/174)** | [#170](https://github.com/MikkoParkkola/trvl/issues/170) | `--min-duration` and `--max-duration` on `trvl dates`. The exact CLI gap that motivated the fli fork, now native. |
+| **[#175](https://github.com/MikkoParkkola/trvl/pull/175)** | [#169](https://github.com/MikkoParkkola/trvl/issues/169), [#171](https://github.com/MikkoParkkola/trvl/issues/171) | `tourist_tax_note` and `tax_added_at_checkout` as native fields in `hotel_prices` MCP output — the "Two kinds of tax" rules from the guide, made part of the data model. |
+| **[#176](https://github.com/MikkoParkkola/trvl/pull/176)** | — | trvl README adds an "Independent coverage" section linking this three-part series, crediting it for shaping the v1.10 trust roadmap. |
+
+Each PR carries an explicit credit line. PR #173 notes it is *"trvl's native version of his travel-search triage"*; PR #175 notes *"these are his trust rules made native."* PR #176 makes the citation permanent in the tool's official README.
+
+When v1.10 is tagged — check [releases](https://github.com/MikkoParkkola/trvl/releases) — `go install github.com/MikkoParkkola/trvl/cmd/trvl@latest` will pick up all five changes.
 
 ---
 
@@ -122,6 +150,8 @@ fli dates --help    # verify --min-duration and --max-duration appear
 ```
 
 *Windows only:* `set PYTHONIOENCODING=utf-8` before any `fli` command to avoid encoding errors on destination names.
+
+*Note: trvl PR #174, merged on main, adds `--min-duration`/`--max-duration` to `trvl dates` natively. Once v1.10 is released, the fli fork will no longer be needed.*
 
 **trvl v1.9.2:**
 
@@ -328,7 +358,7 @@ Export to results/final-results.md.
 
 **~50% property_token coverage.** SerpAPI returns `property_token` for roughly half the properties in a list result. For the other half, `trvl serpapi` returns a verified total but no per-provider breakdown — just the minimum across providers. `serpapi_verified.py` makes its own detail call and covers more hotels, but coverage still isn't 100%.
 
-**Booking links expire.** Google Hotels ad-click links (`aclk`, `travel/clk`) have a shelf life of hours to a couple of days. Issue #168 will add durable Booking.com fallback links to `trvl` natively. Until it lands: `serpapi_verified.py --check-links` HTTP-validates links and drops the dead ones; it also emits a stable Booking.com deep-link as a fallback.
+**Booking links expire (fixed in v1.10).** Google Hotels ad-click links (`aclk`, `travel/clk`) have a shelf life of hours to a couple of days. PR #173 is merged on main: it strips `travel/clk` redirects, tags links `stable` vs `expiring`, and attaches a durable Booking.com deep-link as `booking_fallback_url`. This lands in the installable binary with v1.10. Until then: `serpapi_verified.py --check-links` HTTP-validates links and drops the dead ones; it also emits a stable Booking.com deep-link as a fallback.
 
 **The teaser remains in `trvl hotels`.** `trvl hotels` still returns the teaser price — that's what the command is for: discovery (which hotels exist in the area), not pricing. The distinction is: `trvl hotels` for the list, `trvl serpapi` for the verified price, `trvl prices <place_id>` for the per-provider booking step.
 
@@ -348,4 +378,4 @@ All of these tools reverse-engineer internal endpoints that can change without n
 
 LLMs are non-deterministic. The same prompt run twice may produce different tool call sequences, query a different subset of destinations, or occasionally skip a route. Prices reflect the moment the search ran — a verified `trvl serpapi` total is accurate at that instant, not locked.
 
-The `fli` fork is required as long as [PR #195](https://github.com/punitarani/fli/pull/195) is open upstream. If it merges, install from the upstream repo instead. If trvl issues #167 and #170 land together, the fli dependency may drop entirely — `trvl dates` would cover the duration-constrained search the fork adds, and the pipeline simplifies to one binary.
+The `fli` fork is required as long as [PR #195](https://github.com/punitarani/fli/pull/195) is open upstream. If it merges, install from the upstream repo instead. trvl PR #174 has merged on main, adding `--min-duration`/`--max-duration` to `trvl dates` natively. Once v1.10 is released, the pipeline can consolidate to one binary for both flights and accommodation, and the fli fork will no longer be needed.
