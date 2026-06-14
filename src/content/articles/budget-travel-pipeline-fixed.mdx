@@ -2,7 +2,7 @@
 title: "After the Articles: an Open Source Arc, Two Fixes, and the Updated Setup Guide"
 date: 2026-06-14
 tags: ["open-source", "ai", "mcp", "travel", "automation", "fli", "trvl"]
-description: "What happened after Part 2 published: the maintainer read it, opened an issue, shipped two fixes in 48 hours, and opened five follow-up issues — all of which shipped as merged PRs on main. Plus an honest updated setup guide — without the package that never existed."
+description: "What happened after Part 2 published: the maintainer read it, opened an issue, shipped two fixes in 48 hours, then released v1.10.0 with every workaround from this series built in natively. The complete, current pipeline setup — and what a first open source contribution arc actually looks like."
 status: "published"
 language: "en"
 series: "budget-travel-pipeline"
@@ -30,6 +30,10 @@ sources:
     href: "https://github.com/MikkoParkkola/trvl/pull/175"
   - label: "trvl PR #176 — README Independent coverage section"
     href: "https://github.com/MikkoParkkola/trvl/pull/176"
+  - label: "trvl PR #177 — registry listings + social-proof repositioning"
+    href: "https://github.com/MikkoParkkola/trvl/pull/177"
+  - label: "MikkoParkkola/trvl v1.10.0 release"
+    href: "https://github.com/MikkoParkkola/trvl/releases/tag/v1.10.0"
 ---
 
 ## Where Parts 1 and 2 left off
@@ -105,7 +109,7 @@ All three shipped as merged PRs on main, along with two additional ones. The nex
 
 ## What landed: v1.10 batch on main
 
-All five PRs merged by end of 2026-06-14, pending the v1.10 release tag.
+All six PRs merged and released as [v1.10.0](https://github.com/MikkoParkkola/trvl/releases/tag/v1.10.0) on 2026-06-14.
 
 | PR | Issue | What it does |
 |----|-------|-------------|
@@ -114,10 +118,11 @@ All five PRs merged by end of 2026-06-14, pending the v1.10 release tag.
 | **[#174](https://github.com/MikkoParkkola/trvl/pull/174)** | [#170](https://github.com/MikkoParkkola/trvl/issues/170) | `--min-duration` and `--max-duration` on `trvl dates`. The exact CLI gap that motivated the fli fork, now native. |
 | **[#175](https://github.com/MikkoParkkola/trvl/pull/175)** | [#169](https://github.com/MikkoParkkola/trvl/issues/169), [#171](https://github.com/MikkoParkkola/trvl/issues/171) | `tourist_tax_note` and `tax_added_at_checkout` as native fields in `hotel_prices` MCP output — the "Two kinds of tax" rules from the guide, made part of the data model. |
 | **[#176](https://github.com/MikkoParkkola/trvl/pull/176)** | — | trvl README adds an "Independent coverage" section linking this three-part series, crediting it for shaping the v1.10 trust roadmap. |
+| **[#177](https://github.com/MikkoParkkola/trvl/pull/177)** | — | Registry listings (Smithery, MCPHub, Cursor Directory) added; social-proof section repositioned above "What it looks like". |
 
-Each PR carries an explicit credit line. PR #173 notes it is *"trvl's native version of his travel-search triage"*; PR #175 notes *"these are his trust rules made native."* PR #176 makes the citation permanent in the tool's official README.
+Each of the feature PRs carries an explicit credit line. PR #173 notes it is *"trvl's native version of his travel-search triage"*; PR #175 notes *"these are his trust rules made native."* PR #176 makes the citation permanent in the tool's official README.
 
-When v1.10 is tagged — check [releases](https://github.com/MikkoParkkola/trvl/releases) — `go install github.com/MikkoParkkola/trvl/cmd/trvl@latest` will pick up all five changes.
+Run `go install github.com/MikkoParkkola/trvl/cmd/trvl@latest` to install v1.10.0.
 
 ---
 
@@ -129,15 +134,15 @@ The guide below doesn't reference it. `serpapi_verified.py` is a post-processing
 
 ---
 
-## The complete setup guide: as of 2026-06-14, trvl v1.9.2
+## The complete setup guide: as of 2026-06-14, trvl v1.10.0
 
 The overall structure from Part 2 is still correct. What changed: the `.mcp.json` (one fewer server), the verification step in the prompt (no `hotel-rates` tool), and the note on name-based lookups.
 
 ### What you need
 
 - Python 3.9+, Node 18+ (for MCP server wiring)
-- `fli` from the fork (upstream PRs still open — the fork is still required)
-- `trvl` v1.9.2+
+- `fli` from the fork (only required if you use `--return-time` — see below)
+- `trvl` v1.10.0+
 - A free SerpAPI key: [serpapi.com](https://serpapi.com/) — 250 searches/month, no credit card
 
 ### Install
@@ -151,18 +156,18 @@ fli dates --help    # verify --min-duration and --max-duration appear
 
 *Windows only:* `set PYTHONIOENCODING=utf-8` before any `fli` command to avoid encoding errors on destination names.
 
-*Note: trvl PR #174, merged on main, adds `--min-duration`/`--max-duration` to `trvl dates` natively. Once v1.10 is released, the fli fork will no longer be needed.*
+*As of trvl v1.10.0, `trvl dates` supports `--min-duration`/`--max-duration` natively — the fli fork is only needed if you also use `--return-time` (time-of-day filtering, [PR #196](https://github.com/punitarani/fli/pull/196) still open upstream). If you don't use `--return-time`, skip the fork entirely.*
 
-**trvl v1.9.2:**
+**trvl v1.10.0:**
 
 ```bash
 # macOS
 brew install MikkoParkkola/trvl/trvl
 brew upgrade trvl
-trvl version   # should print 1.9.2
+trvl version   # should print 1.10.0
 ```
 
-Windows: download `trvl_1.9.2_windows_amd64.tar.gz` from the [v1.9.2 release](https://github.com/MikkoParkkola/trvl/releases/tag/v1.9.2), extract, put `trvl.exe` on your PATH.
+Windows: download `trvl_1.10.0_windows_amd64.tar.gz` from the [v1.10.0 release](https://github.com/MikkoParkkola/trvl/releases/tag/v1.10.0), extract, put `trvl.exe` on your PATH.
 
 **SerpAPI key:**
 
@@ -205,9 +210,9 @@ Run `/mcp` — both `fli` and `trvl` should show `connected`.
 
 | What you want | Command | Notes |
 |---------------|---------|-------|
-| Flights — all date combinations in a window | `fli dates BGY-NAP --from 2026-07-22 --to 2026-08-01 --min-duration 5 --max-duration 5` | From the fork. The agent calls `search_dates` via MCP. |
+| Flights — flexible date window | `trvl dates BGY NAP --from 2026-07-22 --to 2026-08-01 --round-trip --min-duration 4 --max-duration 7 --currency EUR` | Native in v1.10.0. Use fli fork only if you also need `--return-time`. The agent calls `find_trip_window` via MCP. |
 | Hotels — verified prices for ranking | `trvl serpapi "Ischia" --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json` | Use this, not `trvl hotels`. Routes through SerpAPI; prices are real. |
-| Hotels — per-provider matrix + OTA links | `trvl prices <google_place_id> --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json` | Needs place ID from `trvl hotels --format json`. Best native path for the booking step. |
+| Hotels — per-provider matrix + OTA links | `trvl prices <google_place_id> --checkin 2026-07-30 --checkout 2026-08-04 --currency EUR --format json` | Needs place ID from `trvl hotels --format json`. Includes `booking_fallback_url` and `link_durability` in v1.10.0. |
 | Deeplinks, tax-aware, link-validated | `python serpapi_verified.py "Ischia" 2026-07-30 2026-08-04 --adults 2 --top 8` | Post-processing, not an agent tool. From [travel-search](https://github.com/RobertoReale/travel-search). |
 
 **Do not use `trvl hotels` for any price you rank on.** It returns Google Hotels teasers — the list-preview minimum, not what you'll pay. Use `trvl serpapi` instead: it costs one SerpAPI search per query and returns verified prices.
@@ -224,7 +229,7 @@ Three levels, each costs more quota:
 
 For island destinations in peak season (Ischia and similar): `trvl rooms` still fails — most hotels don't appear in the Google place-ID index. Use tier 3 for those.
 
-### Name-based lookup: safe in v1.9.2, but still not the automation path
+### Name-based lookup: safe in v1.9.2+, but still not the automation path
 
 The v1.9.2 fix means `trvl prices "Hotel Name" --location "..."` now either resolves correctly or returns `providers: null`. It's no longer dangerous. But for an automated pipeline, `trvl prices <place_id>` remains the right call when you have the ID — a name lookup adds a fuzzy-match step that a place ID skips. Use the name path for one-off lookups or when no place ID is available; use the ID path for anything unattended.
 
@@ -232,15 +237,15 @@ The v1.9.2 fix means `trvl prices "Hotel Name" --location "..."` now either reso
 
 ## The prompt
 
-The four-step template from Part 2 is still valid. Two changes from that version: the `.mcp.json` has one fewer server, and the verification in Step 2 uses `trvl serpapi` instead of the `hotel-rates` tool.
+The four-step template from Part 2 is still valid. Three changes from that version: the `.mcp.json` has one fewer server, the flight search in Step 1 uses `trvl dates` / `find_trip_window` (native in v1.10.0) instead of the fli MCP, and the verification in Step 2 uses `trvl serpapi` instead of the `hotel-rates` tool.
 
-A no-code prompt builder is in [`prompt-builder.html`](https://github.com/RobertoReale/travel-search/blob/master/prompt-builder.html) in the `travel-search` repo — open it in a browser, fill in the form, copy the generated prompt. The builder was written against the Part 2 template and still includes the `hotel-rates` step; use the prompt below instead until it's updated.
+A no-code prompt builder is in [`prompt-builder.html`](https://github.com/RobertoReale/travel-search/blob/master/prompt-builder.html) in the `travel-search` repo — open it in a browser, fill in the form, copy the generated prompt.
 
 ```
 Budget travel pipeline
 
 TRIP VARIABLES
-- Departure airports: [e.g. BGY, MXP, LIN] (fli needs airport codes, search each as a separate roundtrip)
+- Departure airports: [e.g. BGY, MXP, LIN] (IATA airport codes; search each as a separate roundtrip)
 - Overall availability: [e.g. Jul 22 – Aug 6] (earliest you can leave – latest you must be back)
 - Stay duration: [e.g. 5] nights
 - Travellers / Guests: [e.g. 2] adults
@@ -281,13 +286,14 @@ DESTINATIONS (sea/beach access only)
 - [IATA] ([City]) — [access note]
 ...
 
-Step 1 — Flights (fli MCP server)
+Step 1 — Flights (trvl MCP server)
 Using the TRIP VARIABLES and ADVANCED FILTERS above:
-- Search each Departure airport as a separate roundtrip using the search_dates tool.
+- Search each Departure airport as a separate roundtrip using the find_trip_window tool.
+- Set min-duration and max-duration from the Stay duration range (same value = fixed length).
 - Calculate the outbound search window: start date = start of Overall availability. end date =
   end of Overall availability MINUS Stay duration. (e.g. If availability ends Aug 6 and stay
   is 5 nights, your end date is Aug 1).
-- Map Stay duration, Travellers, and time preferences to the tool's arguments.
+- Map Travellers to the adults argument.
 - Apply all specified [Flights] filters (Stops, Class, Airlines, Alliances, Layover) to the tool.
 - Multiply the single adult fare by Travellers for the trip total.
 Sort by cheapest roundtrip. Save all results to results/flights.md.
@@ -358,17 +364,17 @@ Export to results/final-results.md.
 
 **~50% property_token coverage.** SerpAPI returns `property_token` for roughly half the properties in a list result. For the other half, `trvl serpapi` returns a verified total but no per-provider breakdown — just the minimum across providers. `serpapi_verified.py` makes its own detail call and covers more hotels, but coverage still isn't 100%.
 
-**Booking links expire (fixed in v1.10).** Google Hotels ad-click links (`aclk`, `travel/clk`) have a shelf life of hours to a couple of days. PR #173 is merged on main: it strips `travel/clk` redirects, tags links `stable` vs `expiring`, and attaches a durable Booking.com deep-link as `booking_fallback_url`. This lands in the installable binary with v1.10. Until then: `serpapi_verified.py --check-links` HTTP-validates links and drops the dead ones; it also emits a stable Booking.com deep-link as a fallback.
-
 **The teaser remains in `trvl hotels`.** `trvl hotels` still returns the teaser price — that's what the command is for: discovery (which hotels exist in the area), not pricing. The distinction is: `trvl hotels` for the list, `trvl serpapi` for the verified price, `trvl prices <place_id>` for the per-provider booking step.
 
 ---
 
-## What the arc felt like
+## The arc, closed
 
-A blog article with a reproducible problem led to a maintainer issuing two releases in 48 hours and opening three follow-up issues citing the findings by name. That is not exceptional — it is what open source looks like when it works. The maintainer gets accurate, reproducible data. The reporter gets a tool that's more trustworthy. The issues document the broader problem space for anyone who hits the same thing later.
+The sequence: a blog article documented a real problem → a maintainer opened an issue asking for a retest → two fixes shipped in 48 hours → three new issues opened citing the findings → five PRs merged → v1.10.0 released.
 
-This was a first open source contribution arc: not a code PR, but a structured field report that became a regression test and three open issues. The same tool is now safer for everyone who uses it in an agent pipeline. The medium of contribution turned out to be the article itself.
+Every workaround built for this series now exists natively in the tool: the link triage from `serpapi_verified.py`, the tax distinction from the guide, the flexible date search from the `fli` fork. Each feature PR carries an explicit credit line. The README links the series. The loop closed the same day it opened.
+
+This was a first open source contribution arc — not a code PR, but a structured field report. The contribution was the article. The artifact is a safer tool for everyone building on it.
 
 ---
 
@@ -378,4 +384,4 @@ All of these tools reverse-engineer internal endpoints that can change without n
 
 LLMs are non-deterministic. The same prompt run twice may produce different tool call sequences, query a different subset of destinations, or occasionally skip a route. Prices reflect the moment the search ran — a verified `trvl serpapi` total is accurate at that instant, not locked.
 
-The `fli` fork is required as long as [PR #195](https://github.com/punitarani/fli/pull/195) is open upstream. If it merges, install from the upstream repo instead. trvl PR #174 has merged on main, adding `--min-duration`/`--max-duration` to `trvl dates` natively. Once v1.10 is released, the pipeline can consolidate to one binary for both flights and accommodation, and the fli fork will no longer be needed.
+As of trvl v1.10.0, the fli fork is only needed for `--return-time` (departure/arrival time filtering, [PR #196](https://github.com/punitarani/fli/pull/196) still open upstream). If that PR merges, install from the upstream `fli` repo instead. For everything else — flexible stay windows, verified hotel prices, per-provider booking links — trvl covers the full pipeline alone.
