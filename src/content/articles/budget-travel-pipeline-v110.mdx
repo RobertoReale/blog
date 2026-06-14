@@ -1,0 +1,181 @@
+---
+title: "v1.10: The Blog Became the Roadmap"
+date: 2026-06-14
+tags: ["open-source", "ai", "mcp", "travel", "automation", "fli", "trvl"]
+description: "trvl v1.10.0 is out. Every workaround built for this series — link triage, tax flags, flexible stay-duration search — is now native in the tool, with explicit credit in every PR. The retest, what changed in the pipeline, and what serpapi_verified.py still does."
+status: "published"
+language: "en"
+series: "budget-travel-pipeline"
+part: 4
+sources:
+  - label: "MikkoParkkola/trvl v1.10.0 release"
+    href: "https://github.com/MikkoParkkola/trvl/releases/tag/v1.10.0"
+  - label: "trvl PR #172 — AGENTS.md + pipeline ROADMAP"
+    href: "https://github.com/MikkoParkkola/trvl/pull/172"
+  - label: "trvl PR #173 — link-durability triage (native)"
+    href: "https://github.com/MikkoParkkola/trvl/pull/173"
+  - label: "trvl PR #174 — --min-duration/--max-duration on trvl dates"
+    href: "https://github.com/MikkoParkkola/trvl/pull/174"
+  - label: "trvl PR #175 — tourist_tax_note + tax_added_at_checkout fields"
+    href: "https://github.com/MikkoParkkola/trvl/pull/175"
+  - label: "trvl PR #176 — README Independent coverage section"
+    href: "https://github.com/MikkoParkkola/trvl/pull/176"
+  - label: "trvl PR #177 — registry listings + social-proof repositioning"
+    href: "https://github.com/MikkoParkkola/trvl/pull/177"
+  - label: "trvl PR #179 — release PR for v1.10.0"
+    href: "https://github.com/MikkoParkkola/trvl/pull/179"
+  - label: "RobertoReale/travel-search — serpapi_verified.py"
+    href: "https://github.com/RobertoReale/travel-search"
+---
+
+## Where Part 3 left off
+
+[Part 3](/article/budget-travel-pipeline-fixed) documented five PRs merged on `main` — the v1.10 batch — and updated the setup guide to reflect trvl v1.9.2. The PRs were all there; the release tag wasn't. Part 3 closed with: *"When v1.10 is tagged — check [releases](https://github.com/MikkoParkkola/trvl/releases) — `go install` will pick up all five changes."*
+
+The tag came the same evening.
+
+[PR #179](https://github.com/MikkoParkkola/trvl/pull/179) — *"release: v1.10.0 — Trust & Discoverability"* — merged with auto-merge enabled, firing the release workflow. The description: *"Shaped by @RobertoReale's independent testing."*
+
+---
+
+## What v1.10.0 ships
+
+Five PRs, each addressing something built as a workaround in this series:
+
+| PR | What it adds | What it replaced |
+|----|-------------|-----------------|
+| **[#172](https://github.com/MikkoParkkola/trvl/pull/172)** | `find_trip_window` + multi-pax documented in `AGENTS.md`; `ROADMAP.md` added | Undocumented feature I didn't know existed and reinvented by forking `fli` |
+| **[#173](https://github.com/MikkoParkkola/trvl/pull/173)** | `link_durability` tagging (`stable`/`expiring`), strips `travel/clk` redirects, `booking_fallback_url` as durable Booking.com deeplink | The link-triage logic in `serpapi_verified.py` |
+| **[#174](https://github.com/MikkoParkkola/trvl/pull/174)** | `--min-duration`/`--max-duration` on `trvl dates` | The exact reason for the `fli` fork |
+| **[#175](https://github.com/MikkoParkkola/trvl/pull/175)** | `tourist_tax_note` and `tax_added_at_checkout` as native fields in `hotel_prices` output | The "Two kinds of tax" section in the Part 3 guide — now part of the data model |
+| **[#176](https://github.com/MikkoParkkola/trvl/pull/176)** | "Independent coverage" section in trvl's README, linking the three-part series | — |
+
+Each PR carries an explicit credit line to the original work.
+
+---
+
+## The retest
+
+Two commands cover the key additions.
+
+### `trvl dates` with flexible duration
+
+The original reason for forking `fli`: `trvl dates` had a fixed `--duration` flag. The fork added `--min-duration`/`--max-duration` to search a window rather than a single stay length. PR #174 brings the same to trvl natively.
+
+```bash
+trvl dates BGY NAP \
+  --from 2026-07-22 --to 2026-08-01 \
+  --round-trip --min-duration 4 --max-duration 7 \
+  --currency EUR --format json
+```
+
+Result: 44 date combinations, all round-trips with stays between 4 and 7 nights, sorted by price. Cheapest: €42, BGY → NAP July 22 → July 29 (7 nights). The fli fork ran the same query as `fli dates BGY-NAP --from ... --to ... --min-duration 4 --max-duration 7`; the outputs are equivalent.
+
+### `trvl prices` with the new tax fields
+
+Same Hotel Villa Maria test case used throughout the series:
+
+```bash
+trvl prices "Hotel Villa Maria" \
+  --location "Sant Angelo Ischia Italy" \
+  --checkin 2026-07-30 --checkout 2026-08-04 \
+  --currency EUR --format json
+```
+
+The output includes three additions not present before v1.10:
+
+**`tourist_tax_note`** (top-level field):
+
+```
+"tourist_tax_note": "A local tourist or city tax may be payable in cash at the
+property and is typically not included in any online total. Confirm the rate
+locally and budget it as a separate cash cost."
+```
+
+This is the "Two kinds of tax" distinction from the Part 3 guide — that tourist tax is a flat per-night cash levy, identical for every provider at a given hotel, so it doesn't change the ranking but can't be omitted from a true trip cost. It's now emitted by the tool itself.
+
+**`link_durability`** (per-provider field):
+
+Booking.com, Expedia.com, and Hotels.com links carry `"link_durability": "expiring"` — they're `aclk` ad-click links with a shelf life of hours to a couple of days. Providers without ad-click links (Super.com, Evendo, Orbitz) don't carry the field, implying stable.
+
+**`booking_fallback_url`** (top-level field):
+
+```
+"booking_fallback_url": "https://www.booking.com/searchresults.html?checkin=2026-07-30&checkout=2026-08-04&group_adults=2&ss=Hotel+Villa+Maria+Sant%27Angelo+d%27Ischia"
+```
+
+A durable Booking.com search deeplink that encodes the hotel name, dates, and occupancy. No expiry. This is what `serpapi_verified.py` emitted as its "Stable" column — now native in trvl.
+
+The v1.9.2 name-matching fix still holds: the correct hotel (`"Hotel Villa Maria Sant'Angelo d'Ischia"`) with 11 verified providers ranging €620–€1,150. Miramare Sea Resort & Spa does not appear.
+
+---
+
+## What `serpapi_verified.py` still does
+
+The link triage and tax flags are now in trvl, but the script isn't redundant. The two tools cover different ground.
+
+`trvl prices` uses the SerpAPI list call to identify hotels, then makes a detail call for the `property_token`. For hotels where SerpAPI returns a `property_token`, it gets a per-provider matrix. For hotels without one — roughly half, depending on the destination — it returns a verified aggregate total but no OTA breakdown.
+
+`serpapi_verified.py` makes its own detail call per property, independently of whether trvl's list call recovered a `property_token`. That's the coverage difference: it reaches provider-level data on more hotels. It also runs `--check-links` HTTP validation on every link, not just tagging by pattern.
+
+The tax step-up logic also stays useful: when the cheapest provider is tax-exclusive (shows a headline that excludes VAT, adds it at checkout), the script steps up to the cheapest genuinely all-in provider. That step-up is not in trvl — `tax_added_at_checkout` flags which providers do this, but the ranking adjustment is still external.
+
+For island destinations in peak season, `trvl rooms` still fails — no Google place IDs for most Ischia hotels — and `serpapi_verified.py` remains the fallback for per-provider booking links on those properties.
+
+---
+
+## What the fli fork reduces to
+
+Before v1.10, the fork added three things upstream `fli` didn't have: `--min-duration`, `--max-duration`, and `--return-time`.
+
+`--min-duration` and `--max-duration` are now native in `trvl dates`. If you don't need `--return-time` (filtering flights by departure or arrival time), the fork is no longer required for the pipeline — `trvl dates` covers the window search. If you do need `--return-time`, the fork is still the only path; those PRs ([#195](https://github.com/punitarani/fli/pull/195), [#196](https://github.com/punitarani/fli/pull/196)) are still open upstream.
+
+---
+
+## The updated setup
+
+Everything from the [Part 3 setup guide](/article/budget-travel-pipeline-fixed) is still valid. Two things change for v1.10:
+
+**trvl version:** install or upgrade to v1.10.0+:
+
+```bash
+# macOS
+brew upgrade trvl
+trvl version   # should print 1.10.0
+```
+
+Windows: download `trvl_1.10.0_windows_amd64.tar.gz` from the [v1.10.0 release](https://github.com/MikkoParkkola/trvl/releases/tag/v1.10.0), extract, replace `trvl.exe`.
+
+**fli fork:** only required if you need `--return-time`. For window-duration flight search alone, `trvl dates --min-duration N --max-duration N` covers it. If you do install the fork, it still works alongside trvl — both resolve from the same airport codes; pick whichever you run first in the pipeline.
+
+The `.mcp.json`, `SERPAPI_KEY` setup, and prompt structure from Part 3 are unchanged.
+
+**One prompt change for Step 1:** if you've dropped the fli fork, replace the `search_dates` MCP call with the trvl equivalent:
+
+```
+Step 1 — Flights (trvl MCP server)
+Use the find_trip_window tool with --min-duration and --max-duration set to your
+stay-duration range. Search each departure airport as a separate call.
+```
+
+If you keep fli, Step 1 is unchanged.
+
+---
+
+## The wider arc
+
+The series started with a documented gap: a hotel listed at €46/night was €269 on Booking.com, and the tool didn't signal the discrepancy. That gap shaped every workaround that followed — the `fli` fork for flexible searches, `serpapi_verified.py` for verified per-provider prices and link durability, the tax-ranking step-up logic, the note about tourist tax being invisible to every OTA.
+
+v1.10 makes each of those workarounds native, with a credit line in every PR. The link triage is *"trvl's native version of his travel-search triage."* The tax fields are *"his trust rules made native."* The `--min-duration` flag closes *"the exact CLI gap behind his fli fork."* The README now links the series as *"genuine editorial coverage"* that *"shaped the v1.10 trust roadmap."*
+
+The tool is meaningfully different from what it was when the series started. A `trvl prices` call now surfaces link expiry, a stable fallback URL, and a reminder about tourist tax — three things that required post-processing scripts and workarounds in Part 2. An agent pipeline running against v1.10 gets a safer output by default, before any external tooling runs.
+
+`serpapi_verified.py` remains as the detail layer: coverage for hotels without `property_token`, HTTP link validation, and the tax step-up. Not a workaround — a complement to what the tool now does natively.
+
+---
+
+## Caveats
+
+All caveats from Part 3 apply. The tools reverse-engineer endpoints that can change without notice. Prices are point-in-time. LLMs are non-deterministic.
+
+The fli fork is now optional if you only needed `--min-duration`/`--max-duration`. If [PR #195](https://github.com/punitarani/fli/pull/195) or [#196](https://github.com/punitarani/fli/pull/196) merge upstream, install from the upstream `fli` repo instead.
