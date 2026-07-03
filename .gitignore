@@ -1,4 +1,4 @@
-# Dipendenze
+# Dependencies
 node_modules/
 
 # Build output
@@ -6,7 +6,7 @@ dist/
 .astro/
 .vercel/
 
-# Variabili d'ambiente (MAI pubblicare su GitHub)
+# Environment variables (NEVER publish to GitHub)
 .env
 .env.local
 .env.*.local
@@ -16,7 +16,7 @@ test-results/
 playwright-report/
 .playwright/
 
-# Log della pipeline di build
+# Build pipeline logs
 logs/
 
 # Editor
@@ -31,8 +31,8 @@ logs/
 .DS_Store
 Thumbs.db
 
-# File della pipeline di build automatica (opzionale: rimuovi queste righe
-# se vuoi tenere i prompt nel repo come documentazione)
+# Automated build pipeline files (optional: remove these lines
+# if you want to keep the prompts in the repo as documentation)
 SETUP.md
 run.ps1
 check_syntax.ps1

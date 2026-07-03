@@ -28,7 +28,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           for="file-input"
           style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--color-accent); cursor: pointer; font-weight: 500; display: block;"
         >
-          Trascina qui uno o più file .mdx o <span style="text-decoration: underline;">clicca per caricarli</span>
+          Drag one or more .mdx files here or <span style="text-decoration: underline;">click to upload</span>
         </label>
       </div>
 
@@ -36,7 +36,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         for="mdx-input"
         style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;"
       >
-        Oppure incolla il contenuto MDX qui sotto
+        Or paste the MDX content below
       </label>
       <textarea
         id="mdx-input"
@@ -48,7 +48,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <!-- Multi-file list and publish (shown when multiple files are selected) -->
     <div id="multi-file-section" style="display: none; border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
-      <h2 style="font-family: 'Lora', serif; font-size: 1.25rem; margin: 0 0 16px 0;">Articoli pronti per l'importazione</h2>
+      <h2 style="font-family: 'Lora', serif; font-size: 1.25rem; margin: 0 0 16px 0;">Articles ready for import</h2>
       <div id="multi-file-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
         <!-- Dynamic list of items -->
       </div>
@@ -56,7 +56,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <!-- Global Status Toggle for multiple files -->
       <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
         <span style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;">
-          Stato di pubblicazione (per tutti i file)
+          Publication status (for all files)
         </span>
         <div style="display: flex; gap: 8px;">
           <button
@@ -81,7 +81,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           id="publish-all-btn"
           style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
         >
-          Pubblica tutti su GitHub
+          Publish all to GitHub
         </button>
         <span id="multi-status-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem;"></span>
       </div>
@@ -144,7 +144,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
           class="publish-btn"
         >
-          Pubblica su GitHub
+          Publish to GitHub
         </button>
         <span id="status-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem;"></span>
       </div>
@@ -225,10 +225,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   let selectedFiles: ArticleFile[] = [];
   let chosenStatus: 'published' | 'draft' = 'published';
 
+  function escapeHtml(str: string): string {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
   function getToken(): string {
     let token = localStorage.getItem('adminToken');
     while (!token) {
-      token = prompt('Inserisci il token admin:');
+      token = prompt('Enter the admin token:');
       if (token) localStorage.setItem('adminToken', token);
     }
     return token;
@@ -248,12 +254,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     // Update single-file pills
     pillPublished.classList.toggle('status-pill--active', s === 'published');
     pillDraft.classList.toggle('status-pill--active', s === 'draft');
-    publishBtn.textContent = s === 'published' ? 'Pubblica su GitHub' : 'Salva bozza su GitHub';
+    publishBtn.textContent = s === 'published' ? 'Publish to GitHub' : 'Save draft to GitHub';
 
     // Update multi-file pills
     multiPillPublished.classList.toggle('status-pill--active', s === 'published');
     multiPillDraft.classList.toggle('status-pill--active', s === 'draft');
-    publishAllBtn.textContent = s === 'published' ? 'Pubblica tutti su GitHub' : 'Salva tutti come bozze';
+    publishAllBtn.textContent = s === 'published' ? 'Publish all to GitHub' : 'Save all as drafts';
   }
 
   function slugify(title: string): string {
@@ -316,11 +322,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function renderTable(fm: ReturnType<typeof parseFrontmatter>) {
     if (!fm) return;
     const rows: [string, string][] = [];
-    if (fm.title) rows.push(['title', fm.title]);
-    if (fm.date) rows.push(['date', fm.date]);
-    if (fm.tags.length) rows.push(['tags', fm.tags.map(t => `<code style="font-size:0.78rem;">${t}</code>`).join(' ')]);
-    if (fm.description) rows.push(['description', fm.description.slice(0, 100) + (fm.description.length > 100 ? '…' : '')]);
-    if (fm.series) rows.push(['series', fm.series]);
+    if (fm.title) rows.push(['title', escapeHtml(fm.title)]);
+    if (fm.date) rows.push(['date', escapeHtml(fm.date)]);
+    if (fm.tags.length) rows.push(['tags', fm.tags.map(t => `<code style="font-size:0.78rem;">${escapeHtml(t)}</code>`).join(' ')]);
+    if (fm.description) rows.push(['description', escapeHtml(fm.description.slice(0, 100) + (fm.description.length > 100 ? '…' : ''))]);
+    if (fm.series) rows.push(['series', escapeHtml(fm.series)]);
     if (fm.part != null) rows.push(['part', String(fm.part)]);
     metaTable.innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
   }
@@ -328,19 +334,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function renderMultiFileList() {
     multiFileList.innerHTML = selectedFiles.map((item) => {
       let statusBadge = '';
-      if (item.status === 'pending') statusBadge = '<span style="color: var(--color-muted);">In attesa</span>';
-      else if (item.status === 'uploading') statusBadge = '<span style="color: var(--color-accent); font-weight: bold;">Caricamento...</span>';
-      else if (item.status === 'success') statusBadge = '<span style="color: #27ae60; font-weight: bold;">Caricato!</span>';
-      else if (item.status === 'error') statusBadge = `<span style="color: #c0392b; font-weight: bold;">Errore: ${item.error || 'Generico'}</span>`;
+      if (item.status === 'pending') statusBadge = '<span style="color: var(--color-muted);">Pending</span>';
+      else if (item.status === 'uploading') statusBadge = '<span style="color: var(--color-accent); font-weight: bold;">Uploading...</span>';
+      else if (item.status === 'success') statusBadge = '<span style="color: #27ae60; font-weight: bold;">Uploaded!</span>';
+      else if (item.status === 'error') statusBadge = `<span style="color: #c0392b; font-weight: bold;">Error: ${escapeHtml(item.error || 'Unknown')}</span>`;
 
       return `
         <div style="border: 1px solid var(--color-border); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; background: var(--color-origin-bg);">
           <div>
             <div style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;">
-              ${item.parsed?.title || item.file.name}
+              ${escapeHtml(item.parsed?.title || item.file.name)}
             </div>
             <div style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--color-muted); margin-top: 4px;">
-              ${item.name}
+              ${escapeHtml(item.name)}
             </div>
           </div>
           <div style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;">
@@ -365,7 +371,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       multiFileSection.style.display = 'none';
       const file = files[0];
       if (!file.name.endsWith('.mdx') && !file.name.endsWith('.md')) {
-        parseError.textContent = 'Errore: Sono ammessi solo file .mdx o .md';
+        parseError.textContent = 'Error: only .mdx or .md files are allowed';
         parseError.style.display = 'block';
         return;
       }
@@ -375,12 +381,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         textarea.value = text;
         filenameInput.value = file.name.replace(/\.md$/, '.mdx');
         filenameInput.dataset.userEdited = '1';
-        
+
         // Trigger update to parse and show preview
         textarea.dispatchEvent(new Event('input'));
       } catch (err) {
         console.error(err);
-        parseError.textContent = 'Errore durante la lettura del file.';
+        parseError.textContent = 'Error reading the file.';
         parseError.style.display = 'block';
       }
     } else {
@@ -408,9 +414,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           
           if (!parsed || !parsed.title) {
             articleFile.status = 'error';
-            articleFile.error = 'Frontmatter non valido o titolo mancante';
+            articleFile.error = 'Invalid frontmatter or missing title';
           }
-          
+
           selectedFiles.push(articleFile);
         } catch (err) {
           console.error(err);
@@ -418,7 +424,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
 
       if (selectedFiles.length === 0) {
-        parseError.textContent = 'Nessun file .mdx o .md valido selezionato.';
+        parseError.textContent = 'No valid .mdx or .md files selected.';
         parseError.style.display = 'block';
         multiFileSection.style.display = 'none';
         return;
@@ -512,7 +518,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       if (res.status === 401) {
         localStorage.removeItem('adminToken');
         statusMsg.style.color = '#c0392b';
-        statusMsg.textContent = 'Token non valido. Riprova.';
+        statusMsg.textContent = 'Invalid token. Try again.';
         publishBtn.disabled = false;
         return;
       }
@@ -545,8 +551,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   publishAllBtn.addEventListener('click', async () => {
     publishAllBtn.disabled = true;
     multiStatusMsg.style.color = 'var(--color-muted)';
-    multiStatusMsg.textContent = 'Caricamento in corso...';
-    
+    multiStatusMsg.textContent = 'Uploading...';
+
     let successCount = 0;
     const token = getToken();
 
@@ -569,7 +575,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         if (res.status === 401) {
           localStorage.removeItem('adminToken');
           item.status = 'error';
-          item.error = 'Token non valido';
+          item.error = 'Invalid token';
           renderMultiFileList();
           break;
         }
@@ -580,23 +586,23 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           successCount++;
         } else {
           item.status = 'error';
-          item.error = data.error || 'Errore API';
+          item.error = data.error || 'API error';
         }
       } catch (err) {
         item.status = 'error';
-        item.error = 'Errore di rete';
+        item.error = 'Network error';
       }
 
       renderMultiFileList();
     }
-    
+
     const failedCount = selectedFiles.length - successCount;
     if (failedCount === 0) {
       multiStatusMsg.style.color = '#27ae60';
-      multiStatusMsg.textContent = `Caricamento completato con successo! ${successCount} articoli pubblicati su GitHub (live in ~2 min).`;
+      multiStatusMsg.textContent = `Upload completed successfully! ${successCount} articles published to GitHub (live in ~2 min).`;
     } else {
       multiStatusMsg.style.color = '#c0392b';
-      multiStatusMsg.textContent = `Caricamento completato. Riusciti: ${successCount}, Falliti: ${failedCount}.`;
+      multiStatusMsg.textContent = `Upload completed. Succeeded: ${successCount}, Failed: ${failedCount}.`;
     }
     publishAllBtn.disabled = false;
   });

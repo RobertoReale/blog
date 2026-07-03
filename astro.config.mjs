@@ -1,22 +1,25 @@
 import { defineConfig } from 'astro/config';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
-import vercel from '@astrojs/vercel/serverless';
+import vercel from '@astrojs/vercel';
 import expressiveCode from 'astro-expressive-code';
 
 export default defineConfig({
   site: 'https://blog-roberto-reale.vercel.app',
-  output: 'hybrid',
+  output: 'static',
   adapter: vercel(),
+
+  vite: {
+    plugins: [tailwindcss()],
+  },
 
   integrations: [
     expressiveCode(),
-    tailwind(),
     mdx({
       remarkPlugins: [remarkMath],
       rehypePlugins: [rehypeKatex],

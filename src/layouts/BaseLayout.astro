@@ -1,6 +1,6 @@
 ---
 import { SITE } from '../config';
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 import ThemeToggle from '../components/ui/ThemeToggle.astro';
 import BackToTop from '../components/ui/BackToTop.astro';
 import '../styles/global.css';
@@ -63,7 +63,7 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
       applyTheme();
       document.addEventListener('astro:after-swap', applyTheme);
     </script>
-    <ViewTransitions />
+    <ClientRouter />
 
     {import.meta.env.PROD && (
       <script

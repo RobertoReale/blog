@@ -15,7 +15,7 @@ export const GET: APIRoute = async () => {
       title: article.data.title,
       description: article.data.description,
       pubDate: article.data.date,
-      link: `/article/${article.slug}`,
+      link: `/article/${article.id}`,
     })),
   });
 };

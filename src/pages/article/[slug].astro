@@ -1,6 +1,6 @@
 ---
 export const prerender = true;
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 import TagPill from '../../components/ui/TagPill.astro';
 import TOC from '../../components/ui/TOC.astro';
@@ -47,13 +47,13 @@ export async function getStaticPaths() {
         .map(a => ({
           part: a.data.part!,
           title: a.data.title,
-          slug: a.slug,
+          slug: a.id,
           status: a.data.status,
         }));
     }
 
     const related: RelatedArticle[] = published
-      .filter(other => other.slug !== entry.slug)
+      .filter(other => other.id !== entry.id)
       .map(other => ({
         ...other,
         sharedTags: other.data.tags.filter((t: string) => entry.data.tags.includes(t)).length,
@@ -63,7 +63,7 @@ export async function getStaticPaths() {
       .slice(0, 3)
       .map(r => ({
         title: r.data.title,
-        slug: r.slug,
+        slug: r.id,
         date: r.data.date,
         tags: r.data.tags,
         description: r.data.description,
@@ -71,14 +71,14 @@ export async function getStaticPaths() {
       }));
 
     return {
-      params: { slug: entry.slug },
+      params: { slug: entry.id },
       props: { entry, seriesParts, related },
     };
   });
 }
 
 const { entry, seriesParts, related } = Astro.props;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 const readingTime = getReadingTime(entry.body);
 const lang = entry.data.language ?? 'en';
@@ -90,7 +90,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
 <ArticleLayout
   title={entry.data.title}
   description={entry.data.description}
-  slug={entry.slug}
+  slug={entry.id}
   date={entry.data.date}
   coverImage={entry.data.coverImage}
   lang={lang}
@@ -126,7 +126,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
           <span id="share-btn-text">Copy link</span>
         </button>
 
-        <a href={`/api/download/${entry.slug}.mdx`} download={`${entry.slug}.mdx`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0; text-decoration: none;">
+        <a href={`/api/download/${entry.id}.mdx`} download={`${entry.id}.mdx`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0; text-decoration: none;">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
@@ -135,7 +135,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
           Download MDX
         </a>
 
-        <button id="cite-btn" data-citation={`${SITE.author}. (${new Date(entry.data.date).getFullYear()}). ${entry.data.title}. ${SITE.title}. ${SITE.url}/article/${entry.slug}`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0;">
+        <button id="cite-btn" data-citation={`${SITE.author}. (${new Date(entry.data.date).getFullYear()}). ${entry.data.title}. ${SITE.title}. ${SITE.url}/article/${entry.id}`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0;">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path>
             <polyline points="14 2 14 8 20 8"></polyline>

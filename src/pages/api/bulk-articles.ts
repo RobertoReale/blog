@@ -1,5 +1,6 @@
 export const prerender = false;
 import type { APIRoute } from 'astro';
+import { timingSafeEqual } from 'node:crypto';
 
 const OWNER = 'RobertoReale';
 const REPO = 'blog';
@@ -17,7 +18,11 @@ function checkToken(request: Request): boolean {
   const expected = import.meta.env.ADMIN_TOKEN;
   if (!expected) return false;
   const provided = request.headers.get('X-Admin-Token');
-  return provided === expected;
+  if (!provided) return false;
+  const expectedBuf = Buffer.from(expected);
+  const providedBuf = Buffer.from(provided);
+  if (expectedBuf.length !== providedBuf.length) return false;
+  return timingSafeEqual(expectedBuf, providedBuf);
 }
 
 function ghHeaders(token: string) {

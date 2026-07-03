@@ -1,6 +1,7 @@
 export const prerender = false;
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
+import { timingSafeEqual } from 'node:crypto';
 
 function json(body: object, status: number) {
   return new Response(JSON.stringify(body), {
@@ -13,7 +14,11 @@ function checkToken(request: Request): boolean {
   const expected = import.meta.env.ADMIN_TOKEN;
   if (!expected) return false;
   const provided = request.headers.get('X-Admin-Token');
-  return provided === expected;
+  if (!provided) return false;
+  const expectedBuf = Buffer.from(expected);
+  const providedBuf = Buffer.from(provided);
+  if (expectedBuf.length !== providedBuf.length) return false;
+  return timingSafeEqual(expectedBuf, providedBuf);
 }
 
 function buildTagsFile(sortedTags: [string, number][]): string {
@@ -112,7 +117,7 @@ export const GET: APIRoute = async ({ request }) => {
       seriesMap[s].parts.push({
         part: article.data.part ?? '?',
         title: article.data.title,
-        slug: article.slug,
+        slug: article.id,
       });
     }
   }

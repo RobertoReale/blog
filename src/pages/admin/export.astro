@@ -14,7 +14,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </p>
 
     <div id="loading-msg" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.9rem;">
-      Caricamento...
+      Loading...
     </div>
 
     <div id="content" style="display: none;">
@@ -107,7 +107,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function getToken(): string {
     let token = localStorage.getItem('adminToken');
     while (!token) {
-      token = prompt('Inserisci il token admin:');
+      token = prompt('Enter the admin token:');
       if (token) localStorage.setItem('adminToken', token);
     }
     return token;
@@ -137,12 +137,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const res = await fetch('/api/export-data', { headers: { 'X-Admin-Token': token } });
       if (res.status === 401) {
         localStorage.removeItem('adminToken');
-        loadingMsg.textContent = 'Token non valido. Ricarica la pagina per riprovare.';
+        loadingMsg.textContent = 'Invalid token. Reload the page to try again.';
         return;
       }
       const data = await res.json();
       if (!res.ok) {
-        loadingMsg.textContent = data.error ?? 'Errore nel caricamento.';
+        loadingMsg.textContent = data.error ?? 'Error loading data.';
         return;
       }
 
@@ -156,7 +156,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       loadingMsg.style.display = 'none';
       content.style.display = 'block';
     } catch {
-      loadingMsg.textContent = 'Errore di rete durante il caricamento.';
+      loadingMsg.textContent = 'Network error while loading.';
     }
   }
 

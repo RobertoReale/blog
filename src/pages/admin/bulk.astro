@@ -8,7 +8,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <div class="bulk-header">
       <a href="/admin" class="back-link">← Admin</a>
       <h1>Bulk Articles</h1>
-      <p>Seleziona più articoli per cambiarne lo status, serie, tag o lingua, oppure eliminarli in blocco.</p>
+      <p>Select multiple articles to change their status, series, tags, or language, or delete them in bulk.</p>
     </div>
 
     <div id="toolbar" class="toolbar">
@@ -18,56 +18,56 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.35-4.35"></path>
           </svg>
-          <input id="search-input" type="text" placeholder="Cerca per titolo o serie…" />
+          <input id="search-input" type="text" placeholder="Search by title or series…" />
         </div>
-        <div class="filter-chips" role="group" aria-label="Filtra per status">
-          <button class="chip is-active" data-filter="all">Tutti</button>
+        <div class="filter-chips" role="group" aria-label="Filter by status">
+          <button class="chip is-active" data-filter="all">All</button>
           <button class="chip" data-filter="published">Published</button>
           <button class="chip" data-filter="draft">Draft</button>
         </div>
-        <select id="series-filter" class="series-select" aria-label="Filtra per serie">
-          <option value="">Tutte le serie</option>
+        <select id="series-filter" class="series-select" aria-label="Filter by series">
+          <option value="">All series</option>
         </select>
       </div>
 
       <div class="toolbar-row toolbar-actions">
-        <span id="selection-count" class="selection-count">Nessuno selezionato</span>
+        <span id="selection-count" class="selection-count">None selected</span>
         <div class="actions">
-          <button id="btn-set-published" class="bulk-btn bulk-btn--primary" disabled>Imposta Published</button>
-          <button id="btn-set-draft" class="bulk-btn" disabled>Imposta Draft</button>
-          <button id="btn-delete" class="bulk-btn bulk-btn--danger" disabled>Elimina</button>
-          <button id="btn-reload" class="bulk-btn bulk-btn--ghost" aria-label="Ricarica lista">
+          <button id="btn-set-published" class="bulk-btn bulk-btn--primary" disabled>Set Published</button>
+          <button id="btn-set-draft" class="bulk-btn" disabled>Set Draft</button>
+          <button id="btn-delete" class="bulk-btn bulk-btn--danger" disabled>Delete</button>
+          <button id="btn-reload" class="bulk-btn bulk-btn--ghost" aria-label="Reload list">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
               <path d="M21 3v6h-6"></path>
             </svg>
-            Ricarica
+            Reload
           </button>
         </div>
       </div>
 
       <div class="toolbar-row toolbar-edit">
         <div class="edit-group">
-          <label for="bulk-series-input">Serie</label>
-          <input id="bulk-series-input" type="text" placeholder="Nome serie…" list="series-datalist" />
+          <label for="bulk-series-input">Series</label>
+          <input id="bulk-series-input" type="text" placeholder="Series name…" list="series-datalist" />
           <datalist id="series-datalist"></datalist>
-          <button id="btn-set-series" class="bulk-btn bulk-btn--small" disabled>Assegna</button>
-          <button id="btn-clear-series" class="bulk-btn bulk-btn--small bulk-btn--ghost" disabled>Rimuovi</button>
+          <button id="btn-set-series" class="bulk-btn bulk-btn--small" disabled>Assign</button>
+          <button id="btn-clear-series" class="bulk-btn bulk-btn--small bulk-btn--ghost" disabled>Remove</button>
         </div>
         <div class="edit-group">
           <label for="bulk-tag-input">Tag</label>
-          <input id="bulk-tag-input" type="text" placeholder="Nome tag…" list="tags-datalist" />
+          <input id="bulk-tag-input" type="text" placeholder="Tag name…" list="tags-datalist" />
           <datalist id="tags-datalist"></datalist>
-          <button id="btn-add-tag" class="bulk-btn bulk-btn--small" disabled>Aggiungi</button>
-          <button id="btn-remove-tag" class="bulk-btn bulk-btn--small bulk-btn--ghost" disabled>Rimuovi</button>
+          <button id="btn-add-tag" class="bulk-btn bulk-btn--small" disabled>Add</button>
+          <button id="btn-remove-tag" class="bulk-btn bulk-btn--small bulk-btn--ghost" disabled>Remove</button>
         </div>
         <div class="edit-group">
-          <label for="bulk-language-select">Lingua</label>
+          <label for="bulk-language-select">Language</label>
           <select id="bulk-language-select" disabled>
             <option value="en">EN</option>
             <option value="it">IT</option>
           </select>
-          <button id="btn-set-language" class="bulk-btn bulk-btn--small" disabled>Imposta</button>
+          <button id="btn-set-language" class="bulk-btn bulk-btn--small" disabled>Set</button>
         </div>
       </div>
       <p id="toolbar-msg" class="toolbar-msg"></p>
@@ -75,21 +75,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <div id="loading-msg" class="state-msg">
       <span class="spinner" aria-hidden="true"></span>
-      Caricamento articoli...
+      Loading articles...
     </div>
 
     <div id="empty-msg" class="state-msg" style="display: none;">
-      Nessun articolo corrisponde ai filtri attuali.
+      No articles match the current filters.
     </div>
 
     <div class="table-wrap">
       <table id="articles-table" style="display: none;">
         <thead>
           <tr>
-            <th class="col-check"><input type="checkbox" id="select-all" aria-label="Seleziona tutti i risultati visibili" /></th>
-            <th>Titolo</th>
+            <th class="col-check"><input type="checkbox" id="select-all" aria-label="Select all visible results" /></th>
+            <th>Title</th>
             <th class="col-status">Status</th>
-            <th class="col-date">Data</th>
+            <th class="col-date">Date</th>
           </tr>
         </thead>
         <tbody id="articles-tbody"></tbody>
@@ -534,6 +534,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   const NO_SERIES = '__none__';
 
+  function escapeHtml(str: string): string {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
   let articles: Article[] = [];
   let statusFilter: 'all' | 'published' | 'draft' = 'all';
   let searchQuery = '';
@@ -543,7 +549,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function getToken(): string {
     let token = localStorage.getItem('adminToken');
     while (!token) {
-      token = prompt('Inserisci il token admin:');
+      token = prompt('Enter the admin token:');
       if (token) localStorage.setItem('adminToken', token);
     }
     return token;
@@ -554,9 +560,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const seriesNames = Array.from(new Set(articles.map(a => a.series).filter((s): s is string => !!s))).sort();
     const hasUnseries = articles.some(a => !a.series);
 
-    seriesFilterSelect.innerHTML = '<option value="">Tutte le serie</option>'
-      + seriesNames.map(s => `<option value="${s}">${s}</option>`).join('')
-      + (hasUnseries ? `<option value="${NO_SERIES}">Senza serie</option>` : '');
+    seriesFilterSelect.innerHTML = '<option value="">All series</option>'
+      + seriesNames.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')
+      + (hasUnseries ? `<option value="${NO_SERIES}">No series</option>` : '');
 
     if (current && (seriesNames.includes(current) || current === NO_SERIES)) {
       seriesFilterSelect.value = current;
@@ -568,10 +574,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   function populateDatalists() {
     const seriesNames = Array.from(new Set(articles.map(a => a.series).filter((s): s is string => !!s))).sort();
-    seriesDatalist.innerHTML = seriesNames.map(s => `<option value="${s}"></option>`).join('');
+    seriesDatalist.innerHTML = seriesNames.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
 
     const tagNames = Array.from(new Set(articles.flatMap(a => a.tags))).sort();
-    tagsDatalist.innerHTML = tagNames.map(t => `<option value="${t}"></option>`).join('');
+    tagsDatalist.innerHTML = tagNames.map(t => `<option value="${escapeHtml(t)}"></option>`).join('');
   }
 
   function filteredArticles(): Article[] {
@@ -591,7 +597,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     if (!date) return '—';
     const d = new Date(date);
     if (isNaN(d.valueOf())) return date;
-    return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   function updateToolbarState() {
@@ -606,7 +612,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     languageSelect.disabled = n === 0;
     btnSetLanguage.disabled = n === 0;
     const selectionCount = document.getElementById('selection-count')!;
-    selectionCount.textContent = n === 0 ? 'Nessuno selezionato' : `${n} selezionat${n === 1 ? 'o' : 'i'}`;
+    selectionCount.textContent = n === 0 ? 'None selected' : `${n} selected`;
   }
 
   function renderTable() {
@@ -624,11 +630,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     table.style.display = 'table';
 
     tbody.innerHTML = visible.map(a => `
-      <tr data-slug="${a.slug}" class="${selected.has(a.slug) ? 'is-selected' : ''}">
-        <td class="col-check"><input type="checkbox" data-slug="${a.slug}" aria-label="Seleziona ${a.title}" ${selected.has(a.slug) ? 'checked' : ''} /></td>
-        <td class="col-title"><a href="/article/${a.slug}" target="_blank" rel="noopener">${a.title}</a>${a.series ? ` <span class="series-tag">(${a.series})</span>` : ''}</td>
-        <td class="col-status"><span class="status-badge status-badge--${a.status}">${a.status}</span></td>
-        <td class="col-date date-cell">${formatDate(a.date)}</td>
+      <tr data-slug="${escapeHtml(a.slug)}" class="${selected.has(a.slug) ? 'is-selected' : ''}">
+        <td class="col-check"><input type="checkbox" data-slug="${escapeHtml(a.slug)}" aria-label="Select ${escapeHtml(a.title)}" ${selected.has(a.slug) ? 'checked' : ''} /></td>
+        <td class="col-title"><a href="/article/${escapeHtml(a.slug)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>${a.series ? ` <span class="series-tag">(${escapeHtml(a.series)})</span>` : ''}</td>
+        <td class="col-status"><span class="status-badge status-badge--${escapeHtml(a.status)}">${escapeHtml(a.status)}</span></td>
+        <td class="col-date date-cell">${escapeHtml(formatDate(a.date))}</td>
       </tr>
     `).join('');
 
@@ -673,12 +679,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const res = await fetch('/api/bulk-articles', { headers: { 'X-Admin-Token': token } });
       if (res.status === 401) {
         localStorage.removeItem('adminToken');
-        loadingMsg.innerHTML = 'Token non valido. Ricarica la pagina per riprovare.';
+        loadingMsg.innerHTML = 'Invalid token. Reload the page to try again.';
         return;
       }
       const data = await res.json();
       if (!res.ok) {
-        loadingMsg.innerHTML = data.error ?? 'Errore nel caricamento.';
+        loadingMsg.innerHTML = data.error ?? 'Error loading articles.';
         return;
       }
       articles = data.articles;
@@ -689,7 +695,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       renderTable();
       updateToolbarState();
     } catch {
-      loadingMsg.innerHTML = 'Errore di rete durante il caricamento.';
+      loadingMsg.innerHTML = 'Network error while loading.';
     }
   }
 
@@ -728,7 +734,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     if (slugs.length === 0) return;
 
     if (action === 'delete') {
-      const ok = confirm(`Eliminare definitivamente ${slugs.length} articolo/i? Questa azione crea un commit di eliminazione sul repository (recuperabile solo tramite git revert).`);
+      const ok = confirm(`Permanently delete ${slugs.length} article(s)? This creates a deletion commit on the repository (recoverable only via git revert).`);
       if (!ok) return;
     }
 
@@ -738,7 +744,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     ];
     buttons.forEach(b => b.disabled = true);
     toolbarMsg.style.color = 'var(--color-muted)';
-    toolbarMsg.textContent = 'Operazione in corso...';
+    toolbarMsg.textContent = 'Operation in progress...';
 
     const token = getToken();
     try {
@@ -750,13 +756,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       if (res.status === 401) {
         localStorage.removeItem('adminToken');
         toolbarMsg.style.color = '#c0392b';
-        toolbarMsg.textContent = 'Token non valido.';
+        toolbarMsg.textContent = 'Invalid token.';
         return;
       }
       const data = await res.json();
       if (!res.ok) {
         toolbarMsg.style.color = '#c0392b';
-        toolbarMsg.textContent = data.error ?? 'Errore sconosciuto.';
+        toolbarMsg.textContent = data.error ?? 'Unknown error.';
         return;
       }
 
@@ -764,15 +770,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const failed = results.filter(r => !r.ok);
       if (failed.length === 0) {
         toolbarMsg.style.color = '#27ae60';
-        toolbarMsg.textContent = `Fatto: ${results.length} articolo/i aggiornato/i. Il sito pubblico si aggiornerà dopo il redeploy (~1-2 min).`;
+        toolbarMsg.textContent = `Done: ${results.length} article(s) updated. The public site will update after redeploy (~1-2 min).`;
       } else {
         toolbarMsg.style.color = '#c0392b';
-        toolbarMsg.textContent = `Completato con errori: ${failed.map(f => `${f.slug} (${f.error})`).join(', ')}`;
+        toolbarMsg.textContent = `Completed with errors: ${failed.map(f => `${f.slug} (${f.error})`).join(', ')}`;
       }
       await loadArticles();
     } catch {
       toolbarMsg.style.color = '#c0392b';
-      toolbarMsg.textContent = 'Errore di rete.';
+      toolbarMsg.textContent = 'Network error.';
     } finally {
       updateToolbarState();
       btnReload.disabled = false;
@@ -788,7 +794,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const value = seriesInput.value.trim();
     if (!value) {
       toolbarMsg.style.color = '#c0392b';
-      toolbarMsg.textContent = 'Inserisci un nome di serie (o usa "Rimuovi" per toglierla).';
+      toolbarMsg.textContent = 'Enter a series name (or use "Remove" to clear it).';
       return;
     }
     runBulkAction('set-series', { series: value });
@@ -799,7 +805,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const value = tagInput.value.trim();
     if (!value) {
       toolbarMsg.style.color = '#c0392b';
-      toolbarMsg.textContent = 'Inserisci un nome di tag.';
+      toolbarMsg.textContent = 'Enter a tag name.';
       return;
     }
     runBulkAction('add-tag', { tag: value });
@@ -808,7 +814,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const value = tagInput.value.trim();
     if (!value) {
       toolbarMsg.style.color = '#c0392b';
-      toolbarMsg.textContent = 'Inserisci un nome di tag.';
+      toolbarMsg.textContent = 'Enter a tag name.';
       return;
     }
     runBulkAction('remove-tag', { tag: value });
