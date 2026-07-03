@@ -1,0 +1,226 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Bulk Articles">
+  <div style="max-width: 900px; margin: 0 auto;">
+    <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
+      Bulk Articles
+    </h1>
+    <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); margin-bottom: 32px; font-size: 0.95rem;">
+      Seleziona più articoli per cambiarne lo status o eliminarli in blocco.
+    </p>
+
+    <div id="toolbar" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+      <button id="btn-set-published" class="bulk-btn" disabled>Imposta Published</button>
+      <button id="btn-set-draft" class="bulk-btn" disabled>Imposta Draft</button>
+      <button id="btn-delete" class="bulk-btn bulk-btn--danger" disabled>Elimina selezionati</button>
+      <button id="btn-reload" class="bulk-btn bulk-btn--ghost">Ricarica lista</button>
+      <span id="toolbar-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem;"></span>
+    </div>
+
+    <div id="loading-msg" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); padding: 24px 0;">
+      Caricamento articoli...
+    </div>
+
+    <table id="articles-table" style="display: none; width: 100%; border-collapse: collapse; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--color-border); text-align: left;">
+          <th style="padding: 10px 8px;"><input type="checkbox" id="select-all" /></th>
+          <th style="padding: 10px 8px;">Titolo</th>
+          <th style="padding: 10px 8px;">Status</th>
+          <th style="padding: 10px 8px;">Data</th>
+        </tr>
+      </thead>
+      <tbody id="articles-tbody"></tbody>
+    </table>
+  </div>
+</BaseLayout>
+
+<style>
+  .bulk-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-accent);
+    background: transparent;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .bulk-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .bulk-btn--danger { border-color: #c0392b; color: #c0392b; }
+  .bulk-btn--ghost { border-color: var(--color-border); color: var(--color-muted); }
+  .bulk-btn:not(:disabled):hover { opacity: 0.7; }
+  #articles-table tbody tr { border-bottom: 1px solid var(--color-border); }
+  #articles-table tbody tr:hover { background: var(--color-origin-bg); }
+  #articles-table a { color: var(--color-text); text-decoration: none; }
+  #articles-table a:hover { text-decoration: underline; }
+  .status-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+  .status-badge--published { background: rgba(39, 174, 96, 0.15); color: #27ae60; }
+  .status-badge--draft { background: rgba(243, 156, 18, 0.15); color: #f39c12; }
+</style>
+
+<script>
+  interface Article {
+    slug: string;
+    title: string;
+    status: string;
+    date: string | null;
+    series: string | null;
+  }
+
+  const loadingMsg = document.getElementById('loading-msg')!;
+  const table = document.getElementById('articles-table') as HTMLTableElement;
+  const tbody = document.getElementById('articles-tbody')!;
+  const selectAll = document.getElementById('select-all') as HTMLInputElement;
+  const btnPublished = document.getElementById('btn-set-published') as HTMLButtonElement;
+  const btnDraft = document.getElementById('btn-set-draft') as HTMLButtonElement;
+  const btnDelete = document.getElementById('btn-delete') as HTMLButtonElement;
+  const btnReload = document.getElementById('btn-reload') as HTMLButtonElement;
+  const toolbarMsg = document.getElementById('toolbar-msg')!;
+
+  let articles: Article[] = [];
+
+  function getToken(): string {
+    let token = sessionStorage.getItem('adminToken');
+    while (!token) {
+      token = prompt('Inserisci il token admin:');
+      if (token) sessionStorage.setItem('adminToken', token);
+    }
+    return token;
+  }
+
+  function selectedSlugs(): string[] {
+    return Array.from(tbody.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked'))
+      .map(cb => cb.dataset.slug!);
+  }
+
+  function updateToolbarState() {
+    const n = selectedSlugs().length;
+    btnPublished.disabled = n === 0;
+    btnDraft.disabled = n === 0;
+    btnDelete.disabled = n === 0;
+  }
+
+  function renderTable() {
+    tbody.innerHTML = articles.map(a => `
+      <tr>
+        <td style="padding: 8px;"><input type="checkbox" data-slug="${a.slug}" /></td>
+        <td style="padding: 8px;"><a href="/article/${a.slug}" target="_blank">${a.title}</a>${a.series ? ` <span style="color: var(--color-muted); font-size: 0.78rem;">(${a.series})</span>` : ''}</td>
+        <td style="padding: 8px;"><span class="status-badge status-badge--${a.status}">${a.status}</span></td>
+        <td style="padding: 8px; color: var(--color-muted);">${a.date ?? ''}</td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', updateToolbarState);
+    });
+    selectAll.checked = false;
+    updateToolbarState();
+  }
+
+  async function loadArticles() {
+    loadingMsg.style.display = 'block';
+    loadingMsg.textContent = 'Caricamento articoli...';
+    table.style.display = 'none';
+    toolbarMsg.textContent = '';
+
+    const token = getToken();
+    try {
+      const res = await fetch('/api/bulk-articles', { headers: { 'X-Admin-Token': token } });
+      if (res.status === 401) {
+        sessionStorage.removeItem('adminToken');
+        loadingMsg.textContent = 'Token non valido. Ricarica la pagina per riprovare.';
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        loadingMsg.textContent = data.error ?? 'Errore nel caricamento.';
+        return;
+      }
+      articles = data.articles;
+      loadingMsg.style.display = 'none';
+      table.style.display = 'table';
+      renderTable();
+    } catch {
+      loadingMsg.textContent = 'Errore di rete durante il caricamento.';
+    }
+  }
+
+  selectAll.addEventListener('change', () => {
+    tbody.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach(cb => {
+      cb.checked = selectAll.checked;
+    });
+    updateToolbarState();
+  });
+
+  async function runBulkAction(action: 'set-status' | 'delete', status?: 'draft' | 'published') {
+    const slugs = selectedSlugs();
+    if (slugs.length === 0) return;
+
+    if (action === 'delete') {
+      const ok = confirm(`Eliminare definitivamente ${slugs.length} articolo/i? Questa azione crea un commit di eliminazione sul repository (recuperabile solo tramite git revert).`);
+      if (!ok) return;
+    }
+
+    const buttons = [btnPublished, btnDraft, btnDelete, btnReload];
+    buttons.forEach(b => b.disabled = true);
+    toolbarMsg.style.color = 'var(--color-muted)';
+    toolbarMsg.textContent = 'Operazione in corso...';
+
+    const token = getToken();
+    try {
+      const res = await fetch('/api/bulk-articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+        body: JSON.stringify({ action, slugs, status }),
+      });
+      if (res.status === 401) {
+        sessionStorage.removeItem('adminToken');
+        toolbarMsg.style.color = '#c0392b';
+        toolbarMsg.textContent = 'Token non valido.';
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        toolbarMsg.style.color = '#c0392b';
+        toolbarMsg.textContent = data.error ?? 'Errore sconosciuto.';
+        return;
+      }
+
+      const results: Array<{ slug: string; ok: boolean; error?: string }> = data.results;
+      const failed = results.filter(r => !r.ok);
+      if (failed.length === 0) {
+        toolbarMsg.style.color = '#27ae60';
+        toolbarMsg.textContent = `Fatto: ${results.length} articolo/i aggiornato/i. Il sito pubblico si aggiornerà dopo il redeploy (~1-2 min).`;
+      } else {
+        toolbarMsg.style.color = '#c0392b';
+        toolbarMsg.textContent = `Completato con errori: ${failed.map(f => `${f.slug} (${f.error})`).join(', ')}`;
+      }
+      await loadArticles();
+    } catch {
+      toolbarMsg.style.color = '#c0392b';
+      toolbarMsg.textContent = 'Errore di rete.';
+    } finally {
+      updateToolbarState();
+      btnReload.disabled = false;
+    }
+  }
+
+  btnPublished.addEventListener('click', () => runBulkAction('set-status', 'published'));
+  btnDraft.addEventListener('click', () => runBulkAction('set-status', 'draft'));
+  btnDelete.addEventListener('click', () => runBulkAction('delete'));
+  btnReload.addEventListener('click', loadArticles);
+
+  loadArticles();
+</script>
