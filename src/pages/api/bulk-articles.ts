@@ -35,8 +35,8 @@ function parseFrontmatterField(yaml: string, key: string): string | null {
 }
 
 function applyStatus(mdx: string, status: string): string {
-  if (/^status:\s*(draft|published)/m.test(mdx)) {
-    return mdx.replace(/^(status:\s*)(draft|published)/m, `$1${status}`);
+  if (/^status:\s*["']?(?:draft|published)["']?\s*$/m.test(mdx)) {
+    return mdx.replace(/^status:\s*["']?(?:draft|published)["']?\s*$/m, `status: ${status}`);
   }
   return mdx.replace(/^---(\r?\n[\s\S]*?\r?\n)---/m, (match, inner) => `---${inner}status: ${status}\n---`);
 }
