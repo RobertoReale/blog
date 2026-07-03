@@ -5,6 +5,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 <BaseLayout title="Import Article">
   <div style="max-width: 680px; margin: 0 auto;">
+    <a href="/admin" style="display: inline-block; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--color-muted); text-decoration: none; margin-bottom: 12px;">← Admin</a>
     <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
       Import Article
     </h1>
@@ -223,6 +224,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   let selectedFiles: ArticleFile[] = [];
   let chosenStatus: 'published' | 'draft' = 'published';
+
+  function getToken(): string {
+    let token = localStorage.getItem('adminToken');
+    while (!token) {
+      token = prompt('Inserisci il token admin:');
+      if (token) localStorage.setItem('adminToken', token);
+    }
+    return token;
+  }
 
   // Single-file status toggle
   pillPublished.addEventListener('click', () => setChosenStatus('published'));
@@ -491,12 +501,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     statusMsg.style.color = 'var(--color-muted)';
     statusMsg.textContent = chosenStatus === 'published' ? 'Publishing...' : 'Saving draft...';
 
+    const token = getToken();
     try {
       const res = await fetch('/api/import-article', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ filename, content }),
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('adminToken');
+        statusMsg.style.color = '#c0392b';
+        statusMsg.textContent = 'Token non valido. Riprova.';
+        publishBtn.disabled = false;
+        return;
+      }
 
       const data = await res.json();
 
@@ -529,23 +548,32 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     multiStatusMsg.textContent = 'Caricamento in corso...';
     
     let successCount = 0;
-    
+    const token = getToken();
+
     for (let i = 0; i < selectedFiles.length; i++) {
       const item = selectedFiles[i];
       if (item.status === 'error' || item.status === 'success') continue;
-      
+
       item.status = 'uploading';
       renderMultiFileList();
-      
+
       const contentWithStatus = applyStatus(item.content, chosenStatus);
-      
+
       try {
         const res = await fetch('/api/import-article', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
           body: JSON.stringify({ filename: item.name, content: contentWithStatus }),
         });
-        
+
+        if (res.status === 401) {
+          localStorage.removeItem('adminToken');
+          item.status = 'error';
+          item.error = 'Token non valido';
+          renderMultiFileList();
+          break;
+        }
+
         const data = await res.json();
         if (res.ok) {
           item.status = 'success';
@@ -558,7 +586,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         item.status = 'error';
         item.error = 'Errore di rete';
       }
-      
+
       renderMultiFileList();
     }
     

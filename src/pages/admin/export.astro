@@ -1,119 +1,11 @@
 ---
 export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
-
-const articles = await getCollection('articles');
-
-const tagCount: Record<string, number> = {};
-const seriesMap: Record<string, {
-  count: number;
-  parts: { part: number | string; title: string; slug: string }[];
-}> = {};
-
-for (const article of articles) {
-  for (const tag of (article.data.tags ?? [])) {
-    tagCount[tag] = (tagCount[tag] ?? 0) + 1;
-  }
-  if (article.data.series) {
-    const s = article.data.series;
-    if (!seriesMap[s]) seriesMap[s] = { count: 0, parts: [] };
-    seriesMap[s].count++;
-    seriesMap[s].parts.push({
-      part: article.data.part ?? '?',
-      title: article.data.title,
-      slug: article.slug,
-    });
-  }
-}
-
-for (const s of Object.values(seriesMap)) {
-  s.parts.sort((a, b) => (a.part > b.part ? 1 : -1));
-}
-
-const sortedTags = Object.entries(tagCount).sort(([a], [b]) => a.localeCompare(b));
-const sortedSeries = Object.entries(seriesMap).sort(([a], [b]) => a.localeCompare(b));
-
-function buildTagsFile(): string {
-  const lines = [
-    '# Existing Tags',
-    '',
-    'This file is a reference for writing articles.',
-    '**Before choosing tags, read this list and reuse existing tags whenever they fit.**',
-    "Coin a new tag only when no existing one covers the article's main domain.",
-    'When a new tag is coined and accepted, add it here with a description.',
-    '',
-    '---',
-    '',
-    '## Current tags',
-    '',
-  ];
-  if (sortedTags.length === 0) {
-    lines.push('*(no tags found)*');
-  } else {
-    for (const [tag, count] of sortedTags) {
-      lines.push(`- **${tag}** *(${count} article${count === 1 ? '' : 's'})*`);
-    }
-  }
-  lines.push(
-    '',
-    '---',
-    '',
-    '## How to use this file',
-    '',
-    '1. At the end of Phase 2, propose 2–4 tags for the article.',
-    '2. For each tag, state whether it is **reused** (from this list) or **new** (coined now), and one-line justification.',
-    '3. If you coin a new tag, flag it explicitly so the user can confirm and add it here.',
-    '4. Never use more than 4 tags. Prefer fewer, broader tags over many specific ones.',
-    '',
-  );
-  return lines.join('\n');
-}
-
-function buildSeriesFile(): string {
-  const lines = [
-    '# Existing Series',
-    '',
-    'This file is a reference for writing series articles.',
-    '**If the user asks for a series article, check this list first.**',
-    'Use the exact series name as listed — casing matters (it becomes a URL slug).',
-    "If it's a new series, coin a clear name, note it as new, and let the user confirm before writing.",
-    '',
-    '---',
-    '',
-    '## Current series',
-    '',
-  ];
-  if (sortedSeries.length === 0) {
-    lines.push('*(no series found)*');
-  } else {
-    for (const [name, data] of sortedSeries) {
-      lines.push(`- **${name}** (${data.count} part${data.count === 1 ? '' : 's'} published)`);
-      for (const p of data.parts) {
-        lines.push(`  — Part ${p.part}: "${p.title}" (\`${p.slug}\`)`);
-      }
-      lines.push('');
-    }
-  }
-  lines.push(
-    '---',
-    '',
-    '## How to use this file',
-    '',
-    '- If the user says "this belongs to an existing series", match the name exactly from this list.',
-    '- If the user proposes a new series name, flag it as new and confirm before using it in frontmatter.',
-    '- `series` and `part` must both be present in frontmatter when used; omit both if the article is standalone.',
-    '',
-  );
-  return lines.join('\n');
-}
-
-const tagsContent = buildTagsFile();
-const seriesContent = buildSeriesFile();
 ---
 
 <BaseLayout title="Export Tags & Series">
   <div style="max-width: 680px; margin: 0 auto;">
+    <a href="/admin" style="display: inline-block; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--color-muted); text-decoration: none; margin-bottom: 12px;">← Admin</a>
     <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
       Export Tags & Series
     </h1>
@@ -121,71 +13,73 @@ const seriesContent = buildSeriesFile();
       Download the current tags and series inventory as Markdown files.
     </p>
 
-    <!-- Tags card -->
-    <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
-        <div>
-          <h2 style="font-family: 'Lora', serif; font-size: 1.15rem; margin: 0 0 4px 0;">
-            existing-tags.md
-          </h2>
-          <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.85rem; margin: 0;">
-            {sortedTags.length} tag{sortedTags.length === 1 ? '' : 's'} — {articles.length} article{articles.length === 1 ? '' : 's'} scanned
-          </p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button
-            id="copy-tags"
-            style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text); cursor: pointer; transition: border-color 0.15s, color 0.15s;"
-            class="action-btn"
-          >
-            Copy
-          </button>
-          <button
-            id="download-tags"
-            style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
-            class="action-btn-accent"
-          >
-            Download
-          </button>
-        </div>
-      </div>
-      <pre style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; background: var(--color-origin-bg); border-radius: 6px; padding: 16px; overflow-x: auto; white-space: pre-wrap; margin: 0; color: var(--color-text); max-height: 220px; overflow-y: auto; line-height: 1.6;">{tagsContent}</pre>
+    <div id="loading-msg" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.9rem;">
+      Caricamento...
     </div>
 
-    <!-- Series card -->
-    <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 40px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
-        <div>
-          <h2 style="font-family: 'Lora', serif; font-size: 1.15rem; margin: 0 0 4px 0;">
-            existing-series.md
-          </h2>
-          <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.85rem; margin: 0;">
-            {sortedSeries.length} series found
-          </p>
+    <div id="content" style="display: none;">
+      <!-- Tags card -->
+      <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+          <div>
+            <h2 style="font-family: 'Lora', serif; font-size: 1.15rem; margin: 0 0 4px 0;">
+              existing-tags.md
+            </h2>
+            <p id="tags-meta" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.85rem; margin: 0;"></p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button
+              id="copy-tags"
+              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text); cursor: pointer; transition: border-color 0.15s, color 0.15s;"
+              class="action-btn"
+            >
+              Copy
+            </button>
+            <button
+              id="download-tags"
+              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
+              class="action-btn-accent"
+            >
+              Download
+            </button>
+          </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button
-            id="copy-series"
-            style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text); cursor: pointer; transition: border-color 0.15s, color 0.15s;"
-            class="action-btn"
-          >
-            Copy
-          </button>
-          <button
-            id="download-series"
-            style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
-            class="action-btn-accent"
-          >
-            Download
-          </button>
-        </div>
+        <pre id="tags-pre" style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; background: var(--color-origin-bg); border-radius: 6px; padding: 16px; overflow-x: auto; white-space: pre-wrap; margin: 0; color: var(--color-text); max-height: 220px; overflow-y: auto; line-height: 1.6;"></pre>
       </div>
-      <pre style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; background: var(--color-origin-bg); border-radius: 6px; padding: 16px; overflow-x: auto; white-space: pre-wrap; margin: 0; color: var(--color-text); max-height: 220px; overflow-y: auto; line-height: 1.6;">{seriesContent}</pre>
-    </div>
 
-    <p style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--color-muted); text-align: center;">
-      Data is generated live from <code style="font-size: 0.75rem;">src/content/articles/</code> — always up to date.
-    </p>
+      <!-- Series card -->
+      <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+          <div>
+            <h2 style="font-family: 'Lora', serif; font-size: 1.15rem; margin: 0 0 4px 0;">
+              existing-series.md
+            </h2>
+            <p id="series-meta" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.85rem; margin: 0;"></p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button
+              id="copy-series"
+              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text); cursor: pointer; transition: border-color 0.15s, color 0.15s;"
+              class="action-btn"
+            >
+              Copy
+            </button>
+            <button
+              id="download-series"
+              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
+              class="action-btn-accent"
+            >
+              Download
+            </button>
+          </div>
+        </div>
+        <pre id="series-pre" style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; background: var(--color-origin-bg); border-radius: 6px; padding: 16px; overflow-x: auto; white-space: pre-wrap; margin: 0; color: var(--color-text); max-height: 220px; overflow-y: auto; line-height: 1.6;"></pre>
+      </div>
+
+      <p style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--color-muted); text-align: center;">
+        Data is generated live from <code style="font-size: 0.75rem;">src/content/articles/</code> — always up to date.
+      </p>
+    </div>
   </div>
 </BaseLayout>
 
@@ -199,9 +93,28 @@ const seriesContent = buildSeriesFile();
   }
 </style>
 
-<script define:vars={{ tagsContent, seriesContent }}>
-  function download(filename, content) {
-    const blob = new Blob([content], { type: 'text/markdown' });
+<script>
+  const loadingMsg = document.getElementById('loading-msg')!;
+  const content = document.getElementById('content')!;
+  const tagsPre = document.getElementById('tags-pre')!;
+  const seriesPre = document.getElementById('series-pre')!;
+  const tagsMeta = document.getElementById('tags-meta')!;
+  const seriesMeta = document.getElementById('series-meta')!;
+
+  let tagsContent = '';
+  let seriesContent = '';
+
+  function getToken(): string {
+    let token = localStorage.getItem('adminToken');
+    while (!token) {
+      token = prompt('Inserisci il token admin:');
+      if (token) localStorage.setItem('adminToken', token);
+    }
+    return token;
+  }
+
+  function download(filename: string, text: string) {
+    const blob = new Blob([text], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -210,12 +123,41 @@ const seriesContent = buildSeriesFile();
     URL.revokeObjectURL(url);
   }
 
-  function copyToClipboard(content, btn) {
-    navigator.clipboard.writeText(content).then(() => {
+  function copyToClipboard(text: string, btn: HTMLElement) {
+    navigator.clipboard.writeText(text).then(() => {
       const original = btn.textContent;
       btn.textContent = 'Copied!';
       setTimeout(() => { btn.textContent = original; }, 1800);
     });
+  }
+
+  async function load() {
+    const token = getToken();
+    try {
+      const res = await fetch('/api/export-data', { headers: { 'X-Admin-Token': token } });
+      if (res.status === 401) {
+        localStorage.removeItem('adminToken');
+        loadingMsg.textContent = 'Token non valido. Ricarica la pagina per riprovare.';
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        loadingMsg.textContent = data.error ?? 'Errore nel caricamento.';
+        return;
+      }
+
+      tagsContent = data.tagsContent;
+      seriesContent = data.seriesContent;
+      tagsPre.textContent = tagsContent;
+      seriesPre.textContent = seriesContent;
+      tagsMeta.textContent = `${data.tagCount} tag${data.tagCount === 1 ? '' : 's'} — ${data.articleCount} article${data.articleCount === 1 ? '' : 's'} scanned`;
+      seriesMeta.textContent = `${data.seriesCount} series found`;
+
+      loadingMsg.style.display = 'none';
+      content.style.display = 'block';
+    } catch {
+      loadingMsg.textContent = 'Errore di rete durante il caricamento.';
+    }
   }
 
   document.getElementById('download-tags')?.addEventListener('click', () => {
@@ -225,9 +167,11 @@ const seriesContent = buildSeriesFile();
     download('existing-series.md', seriesContent);
   });
   document.getElementById('copy-tags')?.addEventListener('click', (e) => {
-    copyToClipboard(tagsContent, e.currentTarget);
+    copyToClipboard(tagsContent, e.currentTarget as HTMLElement);
   });
   document.getElementById('copy-series')?.addEventListener('click', (e) => {
-    copyToClipboard(seriesContent, e.currentTarget);
+    copyToClipboard(seriesContent, e.currentTarget as HTMLElement);
   });
+
+  load();
 </script>

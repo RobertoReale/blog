@@ -6,6 +6,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 <BaseLayout title="Bulk Articles" wide>
   <div class="bulk-page">
     <div class="bulk-header">
+      <a href="/admin" class="back-link">← Admin</a>
       <h1>Bulk Articles</h1>
       <p>Seleziona più articoli per cambiarne lo status o eliminarli in blocco.</p>
     </div>
@@ -24,6 +25,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <button class="chip" data-filter="published">Published</button>
           <button class="chip" data-filter="draft">Draft</button>
         </div>
+        <select id="series-filter" class="series-select" aria-label="Filtra per serie">
+          <option value="">Tutte le serie</option>
+        </select>
       </div>
 
       <div class="toolbar-row toolbar-actions">
@@ -72,6 +76,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 <style>
   .bulk-page {
     font-family: 'DM Sans', sans-serif;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    margin-bottom: 12px;
+  }
+
+  .back-link:hover {
+    color: var(--color-accent);
   }
 
   .bulk-header h1 {
@@ -136,6 +153,18 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   .filter-chips {
     display: flex;
     gap: 6px;
+  }
+
+  .series-select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
   }
 
   .chip {
@@ -385,6 +414,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       max-width: none;
     }
 
+    .series-select {
+      width: 100%;
+    }
+
     .toolbar-actions {
       flex-direction: column;
       align-items: stretch;
@@ -413,24 +446,47 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const toolbarMsg = document.getElementById('toolbar-msg')!;
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
+  const seriesFilterSelect = document.getElementById('series-filter') as HTMLSelectElement;
+
+  const NO_SERIES = '__none__';
 
   let articles: Article[] = [];
   let statusFilter: 'all' | 'published' | 'draft' = 'all';
   let searchQuery = '';
+  let seriesFilter = '';
   const selected = new Set<string>();
 
   function getToken(): string {
-    let token = sessionStorage.getItem('adminToken');
+    let token = localStorage.getItem('adminToken');
     while (!token) {
       token = prompt('Inserisci il token admin:');
-      if (token) sessionStorage.setItem('adminToken', token);
+      if (token) localStorage.setItem('adminToken', token);
     }
     return token;
+  }
+
+  function populateSeriesFilter() {
+    const current = seriesFilterSelect.value;
+    const seriesNames = Array.from(new Set(articles.map(a => a.series).filter((s): s is string => !!s))).sort();
+    const hasUnseries = articles.some(a => !a.series);
+
+    seriesFilterSelect.innerHTML = '<option value="">Tutte le serie</option>'
+      + seriesNames.map(s => `<option value="${s}">${s}</option>`).join('')
+      + (hasUnseries ? `<option value="${NO_SERIES}">Senza serie</option>` : '');
+
+    if (current && (seriesNames.includes(current) || current === NO_SERIES)) {
+      seriesFilterSelect.value = current;
+      seriesFilter = current;
+    } else {
+      seriesFilter = '';
+    }
   }
 
   function filteredArticles(): Article[] {
     return articles.filter(a => {
       if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+      if (seriesFilter === NO_SERIES && a.series) return false;
+      if (seriesFilter && seriesFilter !== NO_SERIES && a.series !== seriesFilter) return false;
       if (searchQuery) {
         const haystack = `${a.title} ${a.series ?? ''}`.toLowerCase();
         if (!haystack.includes(searchQuery)) return false;
@@ -518,7 +574,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     try {
       const res = await fetch('/api/bulk-articles', { headers: { 'X-Admin-Token': token } });
       if (res.status === 401) {
-        sessionStorage.removeItem('adminToken');
+        localStorage.removeItem('adminToken');
         loadingMsg.innerHTML = 'Token non valido. Ricarica la pagina per riprovare.';
         return;
       }
@@ -530,6 +586,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       articles = data.articles;
       selected.clear();
       loadingMsg.style.display = 'none';
+      populateSeriesFilter();
       renderTable();
       updateToolbarState();
     } catch {
@@ -560,6 +617,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     });
   });
 
+  seriesFilterSelect.addEventListener('change', () => {
+    seriesFilter = seriesFilterSelect.value;
+    renderTable();
+  });
+
   async function runBulkAction(action: 'set-status' | 'delete', status?: 'draft' | 'published') {
     const slugs = Array.from(selected);
     if (slugs.length === 0) return;
@@ -582,7 +644,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         body: JSON.stringify({ action, slugs, status }),
       });
       if (res.status === 401) {
-        sessionStorage.removeItem('adminToken');
+        localStorage.removeItem('adminToken');
         toolbarMsg.style.color = '#c0392b';
         toolbarMsg.textContent = 'Token non valido.';
         return;

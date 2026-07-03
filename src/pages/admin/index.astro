@@ -1,0 +1,120 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const tools = [
+  {
+    href: '/keystatic/branch/master/collection/articles',
+    title: 'Keystatic',
+    description: 'Editor completo: crea, modifica e cancella singoli articoli campo per campo.',
+    protected: false,
+  },
+  {
+    href: '/admin/bulk',
+    title: 'Bulk Articles',
+    description: 'Seleziona più articoli insieme per cambiare status o eliminarli in blocco.',
+    protected: true,
+  },
+  {
+    href: '/admin/import',
+    title: 'Import',
+    description: 'Incolla o trascina file .mdx per pubblicarli direttamente sul repository.',
+    protected: true,
+  },
+  {
+    href: '/admin/export',
+    title: 'Export',
+    description: 'Scarica l\'elenco aggiornato di tag e serie esistenti, in Markdown.',
+    protected: true,
+  },
+];
+---
+
+<BaseLayout title="Admin">
+  <div class="admin-hub">
+    <h1>Admin</h1>
+    <p class="intro">Tutti gli strumenti per gestire il blog, in un unico posto.</p>
+
+    <div class="cards">
+      {tools.map(tool => (
+        <a class="card" href={tool.href}>
+          <div class="card-top">
+            <span class="card-title">{tool.title}</span>
+            {tool.protected && <span class="lock" title="Richiede ADMIN_TOKEN">🔒</span>}
+          </div>
+          <p class="card-desc">{tool.description}</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .admin-hub h1 {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    margin: 0 0 8px 0;
+  }
+
+  .intro {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--color-muted);
+    margin: 0 0 28px 0;
+    font-size: 0.95rem;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  @media (max-width: 639px) {
+    .cards {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .card {
+    display: block;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+
+  .card:hover {
+    border-color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .card-title {
+    font-family: 'Lora', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .lock {
+    font-size: 0.85rem;
+    opacity: 0.6;
+  }
+
+  .card-desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+</style>

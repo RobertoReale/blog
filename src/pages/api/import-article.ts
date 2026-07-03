@@ -5,7 +5,16 @@ const OWNER = 'RobertoReale';
 const REPO = 'blog';
 const BRANCH = 'master';
 
+function checkToken(request: Request): boolean {
+  const expected = import.meta.env.ADMIN_TOKEN;
+  if (!expected) return false;
+  const provided = request.headers.get('X-Admin-Token');
+  return provided === expected;
+}
+
 export const POST: APIRoute = async ({ request }) => {
+  if (!checkToken(request)) return json({ error: 'Unauthorized' }, 401);
+
   const token = import.meta.env.BLOG_GITHUB_TOKEN;
   if (!token) {
     return json({ error: 'BLOG_GITHUB_TOKEN not configured.' }, 500);
