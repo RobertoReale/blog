@@ -8,7 +8,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <div class="bulk-header">
       <a href="/admin" class="back-link">← Admin</a>
       <h1>Bulk Articles</h1>
-      <p>Seleziona più articoli per cambiarne lo status o eliminarli in blocco.</p>
+      <p>Seleziona più articoli per cambiarne lo status, serie, tag o lingua, oppure eliminarli in blocco.</p>
     </div>
 
     <div id="toolbar" class="toolbar">
@@ -43,6 +43,31 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </svg>
             Ricarica
           </button>
+        </div>
+      </div>
+
+      <div class="toolbar-row toolbar-edit">
+        <div class="edit-group">
+          <label for="bulk-series-input">Serie</label>
+          <input id="bulk-series-input" type="text" placeholder="Nome serie…" list="series-datalist" />
+          <datalist id="series-datalist"></datalist>
+          <button id="btn-set-series" class="bulk-btn bulk-btn--small" disabled>Assegna</button>
+          <button id="btn-clear-series" class="bulk-btn bulk-btn--small bulk-btn--ghost" disabled>Rimuovi</button>
+        </div>
+        <div class="edit-group">
+          <label for="bulk-tag-input">Tag</label>
+          <input id="bulk-tag-input" type="text" placeholder="Nome tag…" list="tags-datalist" />
+          <datalist id="tags-datalist"></datalist>
+          <button id="btn-add-tag" class="bulk-btn bulk-btn--small" disabled>Aggiungi</button>
+          <button id="btn-remove-tag" class="bulk-btn bulk-btn--small bulk-btn--ghost" disabled>Rimuovi</button>
+        </div>
+        <div class="edit-group">
+          <label for="bulk-language-select">Lingua</label>
+          <select id="bulk-language-select" disabled>
+            <option value="en">EN</option>
+            <option value="it">IT</option>
+          </select>
+          <button id="btn-set-language" class="bulk-btn bulk-btn--small" disabled>Imposta</button>
         </div>
       </div>
       <p id="toolbar-msg" class="toolbar-msg"></p>
@@ -249,6 +274,41 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     opacity: 0.8;
   }
 
+  .toolbar-edit {
+    padding-top: 12px;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .edit-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .edit-group label {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+
+  .edit-group input,
+  .edit-group select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text);
+    width: 150px;
+  }
+
+  .bulk-btn--small {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
   .toolbar-msg {
     margin: 10px 0 0 0;
     font-size: 0.85rem;
@@ -422,6 +482,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       flex-direction: column;
       align-items: stretch;
     }
+
+    .toolbar-edit {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .edit-group input,
+    .edit-group select {
+      flex: 1 1 auto;
+      width: auto;
+    }
   }
 </style>
 
@@ -432,6 +503,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     status: string;
     date: string | null;
     series: string | null;
+    tags: string[];
+    language: string;
   }
 
   const loadingMsg = document.getElementById('loading-msg')!;
@@ -447,6 +520,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
   const seriesFilterSelect = document.getElementById('series-filter') as HTMLSelectElement;
+
+  const seriesInput = document.getElementById('bulk-series-input') as HTMLInputElement;
+  const seriesDatalist = document.getElementById('series-datalist') as HTMLDataListElement;
+  const btnSetSeries = document.getElementById('btn-set-series') as HTMLButtonElement;
+  const btnClearSeries = document.getElementById('btn-clear-series') as HTMLButtonElement;
+  const tagInput = document.getElementById('bulk-tag-input') as HTMLInputElement;
+  const tagsDatalist = document.getElementById('tags-datalist') as HTMLDataListElement;
+  const btnAddTag = document.getElementById('btn-add-tag') as HTMLButtonElement;
+  const btnRemoveTag = document.getElementById('btn-remove-tag') as HTMLButtonElement;
+  const languageSelect = document.getElementById('bulk-language-select') as HTMLSelectElement;
+  const btnSetLanguage = document.getElementById('btn-set-language') as HTMLButtonElement;
 
   const NO_SERIES = '__none__';
 
@@ -482,6 +566,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
   }
 
+  function populateDatalists() {
+    const seriesNames = Array.from(new Set(articles.map(a => a.series).filter((s): s is string => !!s))).sort();
+    seriesDatalist.innerHTML = seriesNames.map(s => `<option value="${s}"></option>`).join('');
+
+    const tagNames = Array.from(new Set(articles.flatMap(a => a.tags))).sort();
+    tagsDatalist.innerHTML = tagNames.map(t => `<option value="${t}"></option>`).join('');
+  }
+
   function filteredArticles(): Article[] {
     return articles.filter(a => {
       if (statusFilter !== 'all' && a.status !== statusFilter) return false;
@@ -507,6 +599,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     btnPublished.disabled = n === 0;
     btnDraft.disabled = n === 0;
     btnDelete.disabled = n === 0;
+    btnSetSeries.disabled = n === 0;
+    btnClearSeries.disabled = n === 0;
+    btnAddTag.disabled = n === 0;
+    btnRemoveTag.disabled = n === 0;
+    languageSelect.disabled = n === 0;
+    btnSetLanguage.disabled = n === 0;
     const selectionCount = document.getElementById('selection-count')!;
     selectionCount.textContent = n === 0 ? 'Nessuno selezionato' : `${n} selezionat${n === 1 ? 'o' : 'i'}`;
   }
@@ -587,6 +685,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       selected.clear();
       loadingMsg.style.display = 'none';
       populateSeriesFilter();
+      populateDatalists();
       renderTable();
       updateToolbarState();
     } catch {
@@ -622,7 +721,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     renderTable();
   });
 
-  async function runBulkAction(action: 'set-status' | 'delete', status?: 'draft' | 'published') {
+  type BulkAction = 'set-status' | 'delete' | 'set-series' | 'add-tag' | 'remove-tag' | 'set-language';
+
+  async function runBulkAction(action: BulkAction, extra: Record<string, string> = {}) {
     const slugs = Array.from(selected);
     if (slugs.length === 0) return;
 
@@ -631,7 +732,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       if (!ok) return;
     }
 
-    const buttons = [btnPublished, btnDraft, btnDelete, btnReload];
+    const buttons = [
+      btnPublished, btnDraft, btnDelete, btnReload,
+      btnSetSeries, btnClearSeries, btnAddTag, btnRemoveTag, btnSetLanguage,
+    ];
     buttons.forEach(b => b.disabled = true);
     toolbarMsg.style.color = 'var(--color-muted)';
     toolbarMsg.textContent = 'Operazione in corso...';
@@ -641,7 +745,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const res = await fetch('/api/bulk-articles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ action, slugs, status }),
+        body: JSON.stringify({ action, slugs, ...extra }),
       });
       if (res.status === 401) {
         localStorage.removeItem('adminToken');
@@ -675,10 +779,42 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }
   }
 
-  btnPublished.addEventListener('click', () => runBulkAction('set-status', 'published'));
-  btnDraft.addEventListener('click', () => runBulkAction('set-status', 'draft'));
+  btnPublished.addEventListener('click', () => runBulkAction('set-status', { status: 'published' }));
+  btnDraft.addEventListener('click', () => runBulkAction('set-status', { status: 'draft' }));
   btnDelete.addEventListener('click', () => runBulkAction('delete'));
   btnReload.addEventListener('click', loadArticles);
+
+  btnSetSeries.addEventListener('click', () => {
+    const value = seriesInput.value.trim();
+    if (!value) {
+      toolbarMsg.style.color = '#c0392b';
+      toolbarMsg.textContent = 'Inserisci un nome di serie (o usa "Rimuovi" per toglierla).';
+      return;
+    }
+    runBulkAction('set-series', { series: value });
+  });
+  btnClearSeries.addEventListener('click', () => runBulkAction('set-series', { series: '' }));
+
+  btnAddTag.addEventListener('click', () => {
+    const value = tagInput.value.trim();
+    if (!value) {
+      toolbarMsg.style.color = '#c0392b';
+      toolbarMsg.textContent = 'Inserisci un nome di tag.';
+      return;
+    }
+    runBulkAction('add-tag', { tag: value });
+  });
+  btnRemoveTag.addEventListener('click', () => {
+    const value = tagInput.value.trim();
+    if (!value) {
+      toolbarMsg.style.color = '#c0392b';
+      toolbarMsg.textContent = 'Inserisci un nome di tag.';
+      return;
+    }
+    runBulkAction('remove-tag', { tag: value });
+  });
+
+  btnSetLanguage.addEventListener('click', () => runBulkAction('set-language', { language: languageSelect.value }));
 
   loadArticles();
 </script>
