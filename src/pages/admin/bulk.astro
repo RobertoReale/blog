@@ -3,71 +3,393 @@ export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Bulk Articles">
-  <div style="max-width: 900px; margin: 0 auto;">
-    <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
-      Bulk Articles
-    </h1>
-    <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); margin-bottom: 32px; font-size: 0.95rem;">
-      Seleziona più articoli per cambiarne lo status o eliminarli in blocco.
-    </p>
-
-    <div id="toolbar" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-      <button id="btn-set-published" class="bulk-btn" disabled>Imposta Published</button>
-      <button id="btn-set-draft" class="bulk-btn" disabled>Imposta Draft</button>
-      <button id="btn-delete" class="bulk-btn bulk-btn--danger" disabled>Elimina selezionati</button>
-      <button id="btn-reload" class="bulk-btn bulk-btn--ghost">Ricarica lista</button>
-      <span id="toolbar-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem;"></span>
+<BaseLayout title="Bulk Articles" wide>
+  <div class="bulk-page">
+    <div class="bulk-header">
+      <h1>Bulk Articles</h1>
+      <p>Seleziona più articoli per cambiarne lo status o eliminarli in blocco.</p>
     </div>
 
-    <div id="loading-msg" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); padding: 24px 0;">
+    <div id="toolbar" class="toolbar">
+      <div class="toolbar-row">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input id="search-input" type="text" placeholder="Cerca per titolo o serie…" />
+        </div>
+        <div class="filter-chips" role="group" aria-label="Filtra per status">
+          <button class="chip is-active" data-filter="all">Tutti</button>
+          <button class="chip" data-filter="published">Published</button>
+          <button class="chip" data-filter="draft">Draft</button>
+        </div>
+      </div>
+
+      <div class="toolbar-row toolbar-actions">
+        <span id="selection-count" class="selection-count">Nessuno selezionato</span>
+        <div class="actions">
+          <button id="btn-set-published" class="bulk-btn bulk-btn--primary" disabled>Imposta Published</button>
+          <button id="btn-set-draft" class="bulk-btn" disabled>Imposta Draft</button>
+          <button id="btn-delete" class="bulk-btn bulk-btn--danger" disabled>Elimina</button>
+          <button id="btn-reload" class="bulk-btn bulk-btn--ghost" aria-label="Ricarica lista">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+              <path d="M21 3v6h-6"></path>
+            </svg>
+            Ricarica
+          </button>
+        </div>
+      </div>
+      <p id="toolbar-msg" class="toolbar-msg"></p>
+    </div>
+
+    <div id="loading-msg" class="state-msg">
+      <span class="spinner" aria-hidden="true"></span>
       Caricamento articoli...
     </div>
 
-    <table id="articles-table" style="display: none; width: 100%; border-collapse: collapse; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;">
-      <thead>
-        <tr style="border-bottom: 1px solid var(--color-border); text-align: left;">
-          <th style="padding: 10px 8px;"><input type="checkbox" id="select-all" /></th>
-          <th style="padding: 10px 8px;">Titolo</th>
-          <th style="padding: 10px 8px;">Status</th>
-          <th style="padding: 10px 8px;">Data</th>
-        </tr>
-      </thead>
-      <tbody id="articles-tbody"></tbody>
-    </table>
+    <div id="empty-msg" class="state-msg" style="display: none;">
+      Nessun articolo corrisponde ai filtri attuali.
+    </div>
+
+    <div class="table-wrap">
+      <table id="articles-table" style="display: none;">
+        <thead>
+          <tr>
+            <th class="col-check"><input type="checkbox" id="select-all" aria-label="Seleziona tutti i risultati visibili" /></th>
+            <th>Titolo</th>
+            <th class="col-status">Status</th>
+            <th class="col-date">Data</th>
+          </tr>
+        </thead>
+        <tbody id="articles-tbody"></tbody>
+      </table>
+    </div>
   </div>
 </BaseLayout>
 
 <style>
-  .bulk-btn {
+  .bulk-page {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .bulk-header h1 {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    margin: 0 0 8px 0;
+  }
+
+  .bulk-header p {
+    color: var(--color-muted);
+    margin: 0 0 28px 0;
+    font-size: 0.95rem;
+  }
+
+  /* ─── Toolbar ─── */
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--color-bg);
+    padding: 14px 0 16px 0;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 16px;
+  }
+
+  .toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-row + .toolbar-row {
+    margin-top: 12px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-origin-bg);
+    color: var(--color-muted);
+    flex: 1 1 240px;
+    max-width: 340px;
+  }
+
+  .search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
+    color: var(--color-text);
+    width: 100%;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+  }
+
+  .chip {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
     font-weight: 500;
-    padding: 8px 18px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .chip:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  .chip.is-active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .toolbar-actions {
+    justify-content: space-between;
+  }
+
+  .selection-count {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .bulk-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
     border-radius: 9999px;
     border: 1px solid var(--color-accent);
     background: transparent;
     color: var(--color-accent);
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: opacity 0.15s, background 0.15s;
+    white-space: nowrap;
   }
-  .bulk-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .bulk-btn--danger { border-color: #c0392b; color: #c0392b; }
-  .bulk-btn--ghost { border-color: var(--color-border); color: var(--color-muted); }
-  .bulk-btn:not(:disabled):hover { opacity: 0.7; }
-  #articles-table tbody tr { border-bottom: 1px solid var(--color-border); }
-  #articles-table tbody tr:hover { background: var(--color-origin-bg); }
-  #articles-table a { color: var(--color-text); text-decoration: none; }
-  #articles-table a:hover { text-decoration: underline; }
-  .status-badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 9999px;
+
+  .bulk-btn--primary {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .bulk-btn--danger {
+    border-color: #c0392b;
+    color: #c0392b;
+  }
+
+  .bulk-btn--ghost {
+    border-color: var(--color-border);
+    color: var(--color-muted);
+  }
+
+  .bulk-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .bulk-btn:not(:disabled):hover {
+    opacity: 0.8;
+  }
+
+  .toolbar-msg {
+    margin: 10px 0 0 0;
+    font-size: 0.85rem;
+    min-height: 1.2em;
+  }
+
+  /* ─── States ─── */
+
+  .state-msg {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    padding: 40px 0;
+    justify-content: center;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ─── Table ─── */
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  #articles-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  #articles-table thead th {
+    text-align: left;
+    padding: 8px;
     font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  #articles-table .col-check { width: 36px; }
+  #articles-table .col-status { width: 110px; }
+  #articles-table .col-date { width: 100px; }
+
+  #articles-table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  #articles-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--color-origin-bg) 60%, transparent);
+  }
+
+  #articles-table tbody tr:hover {
+    background: var(--color-origin-bg);
+  }
+
+  #articles-table tbody tr.is-selected {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+
+  #articles-table td {
+    padding: 10px 8px;
+    vertical-align: top;
+  }
+
+  #articles-table td.col-title a {
+    color: var(--color-text);
+    text-decoration: none;
     font-weight: 500;
   }
+
+  #articles-table td.col-title a:hover {
+    text-decoration: underline;
+  }
+
+  .series-tag {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    font-weight: 400;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
   .status-badge--published { background: rgba(39, 174, 96, 0.15); color: #27ae60; }
   .status-badge--draft { background: rgba(243, 156, 18, 0.15); color: #f39c12; }
+
+  .date-cell {
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+
+  /* ─── Mobile: card layout instead of table ─── */
+
+  @media (max-width: 640px) {
+    #articles-table thead {
+      display: none;
+    }
+
+    #articles-table, #articles-table tbody, #articles-table tr, #articles-table td {
+      display: block;
+      width: 100%;
+    }
+
+    #articles-table tbody tr {
+      padding: 12px 8px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid var(--color-border);
+    }
+
+    #articles-table td {
+      padding: 2px 0;
+    }
+
+    #articles-table td.col-check {
+      position: absolute;
+      margin-left: 8px;
+    }
+
+    #articles-table td.col-title {
+      padding-left: 30px;
+      padding-bottom: 8px;
+    }
+
+    #articles-table td.col-status,
+    #articles-table td.col-date {
+      display: inline-block;
+      padding-left: 30px;
+      margin-right: 8px;
+    }
+
+    #articles-table tr {
+      position: relative;
+    }
+
+    .toolbar-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-box {
+      max-width: none;
+    }
+
+    .toolbar-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
 </style>
 
 <script>
@@ -80,6 +402,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   }
 
   const loadingMsg = document.getElementById('loading-msg')!;
+  const emptyMsg = document.getElementById('empty-msg')!;
   const table = document.getElementById('articles-table') as HTMLTableElement;
   const tbody = document.getElementById('articles-tbody')!;
   const selectAll = document.getElementById('select-all') as HTMLInputElement;
@@ -88,8 +411,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const btnDelete = document.getElementById('btn-delete') as HTMLButtonElement;
   const btnReload = document.getElementById('btn-reload') as HTMLButtonElement;
   const toolbarMsg = document.getElementById('toolbar-msg')!;
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
 
   let articles: Article[] = [];
+  let statusFilter: 'all' | 'published' | 'draft' = 'all';
+  let searchQuery = '';
+  const selected = new Set<string>();
 
   function getToken(): string {
     let token = sessionStorage.getItem('adminToken');
@@ -100,39 +428,90 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     return token;
   }
 
-  function selectedSlugs(): string[] {
-    return Array.from(tbody.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked'))
-      .map(cb => cb.dataset.slug!);
+  function filteredArticles(): Article[] {
+    return articles.filter(a => {
+      if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+      if (searchQuery) {
+        const haystack = `${a.title} ${a.series ?? ''}`.toLowerCase();
+        if (!haystack.includes(searchQuery)) return false;
+      }
+      return true;
+    });
+  }
+
+  function formatDate(date: string | null): string {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.valueOf())) return date;
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   function updateToolbarState() {
-    const n = selectedSlugs().length;
+    const n = selected.size;
     btnPublished.disabled = n === 0;
     btnDraft.disabled = n === 0;
     btnDelete.disabled = n === 0;
+    const selectionCount = document.getElementById('selection-count')!;
+    selectionCount.textContent = n === 0 ? 'Nessuno selezionato' : `${n} selezionat${n === 1 ? 'o' : 'i'}`;
   }
 
   function renderTable() {
-    tbody.innerHTML = articles.map(a => `
-      <tr>
-        <td style="padding: 8px;"><input type="checkbox" data-slug="${a.slug}" /></td>
-        <td style="padding: 8px;"><a href="/article/${a.slug}" target="_blank">${a.title}</a>${a.series ? ` <span style="color: var(--color-muted); font-size: 0.78rem;">(${a.series})</span>` : ''}</td>
-        <td style="padding: 8px;"><span class="status-badge status-badge--${a.status}">${a.status}</span></td>
-        <td style="padding: 8px; color: var(--color-muted);">${a.date ?? ''}</td>
+    const visible = filteredArticles();
+
+    if (visible.length === 0) {
+      table.style.display = 'none';
+      emptyMsg.style.display = 'flex';
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+      return;
+    }
+
+    emptyMsg.style.display = 'none';
+    table.style.display = 'table';
+
+    tbody.innerHTML = visible.map(a => `
+      <tr data-slug="${a.slug}" class="${selected.has(a.slug) ? 'is-selected' : ''}">
+        <td class="col-check"><input type="checkbox" data-slug="${a.slug}" aria-label="Seleziona ${a.title}" ${selected.has(a.slug) ? 'checked' : ''} /></td>
+        <td class="col-title"><a href="/article/${a.slug}" target="_blank" rel="noopener">${a.title}</a>${a.series ? ` <span class="series-tag">(${a.series})</span>` : ''}</td>
+        <td class="col-status"><span class="status-badge status-badge--${a.status}">${a.status}</span></td>
+        <td class="col-date date-cell">${formatDate(a.date)}</td>
       </tr>
     `).join('');
 
     tbody.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener('change', updateToolbarState);
+      cb.addEventListener('change', () => {
+        const slug = cb.dataset.slug!;
+        if (cb.checked) selected.add(slug); else selected.delete(slug);
+        cb.closest('tr')!.classList.toggle('is-selected', cb.checked);
+        syncSelectAll();
+        updateToolbarState();
+      });
     });
-    selectAll.checked = false;
-    updateToolbarState();
+
+    tbody.querySelectorAll<HTMLTableRowElement>('tr').forEach(row => {
+      row.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'A' || target.tagName === 'INPUT') return;
+        const cb = row.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event('change'));
+      });
+    });
+
+    syncSelectAll();
+  }
+
+  function syncSelectAll() {
+    const visible = filteredArticles();
+    const visibleSelected = visible.filter(a => selected.has(a.slug)).length;
+    selectAll.checked = visible.length > 0 && visibleSelected === visible.length;
+    selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visible.length;
   }
 
   async function loadArticles() {
-    loadingMsg.style.display = 'block';
-    loadingMsg.textContent = 'Caricamento articoli...';
+    loadingMsg.style.display = 'flex';
     table.style.display = 'none';
+    emptyMsg.style.display = 'none';
     toolbarMsg.textContent = '';
 
     const token = getToken();
@@ -140,32 +519,49 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       const res = await fetch('/api/bulk-articles', { headers: { 'X-Admin-Token': token } });
       if (res.status === 401) {
         sessionStorage.removeItem('adminToken');
-        loadingMsg.textContent = 'Token non valido. Ricarica la pagina per riprovare.';
+        loadingMsg.innerHTML = 'Token non valido. Ricarica la pagina per riprovare.';
         return;
       }
       const data = await res.json();
       if (!res.ok) {
-        loadingMsg.textContent = data.error ?? 'Errore nel caricamento.';
+        loadingMsg.innerHTML = data.error ?? 'Errore nel caricamento.';
         return;
       }
       articles = data.articles;
+      selected.clear();
       loadingMsg.style.display = 'none';
-      table.style.display = 'table';
       renderTable();
+      updateToolbarState();
     } catch {
-      loadingMsg.textContent = 'Errore di rete durante il caricamento.';
+      loadingMsg.innerHTML = 'Errore di rete durante il caricamento.';
     }
   }
 
   selectAll.addEventListener('change', () => {
-    tbody.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach(cb => {
-      cb.checked = selectAll.checked;
+    const visible = filteredArticles();
+    visible.forEach(a => {
+      if (selectAll.checked) selected.add(a.slug); else selected.delete(a.slug);
     });
+    renderTable();
     updateToolbarState();
   });
 
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim().toLowerCase();
+    renderTable();
+  });
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('is-active'));
+      chip.classList.add('is-active');
+      statusFilter = chip.dataset.filter as 'all' | 'published' | 'draft';
+      renderTable();
+    });
+  });
+
   async function runBulkAction(action: 'set-status' | 'delete', status?: 'draft' | 'published') {
-    const slugs = selectedSlugs();
+    const slugs = Array.from(selected);
     if (slugs.length === 0) return;
 
     if (action === 'delete') {

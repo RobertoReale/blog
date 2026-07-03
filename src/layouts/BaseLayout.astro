@@ -10,6 +10,7 @@ interface Props {
   description?: string;
   lang?: string;
   canonicalURL?: string;
+  wide?: boolean;
 }
 
 const {
@@ -17,6 +18,7 @@ const {
   description = SITE.description,
   lang = 'en',
   canonicalURL = `${SITE.url}${Astro.url.pathname}`,
+  wide = false,
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
@@ -127,7 +129,7 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
       </div>
     </nav>
     <main class="site-main">
-      <div style="max-width: 680px; margin: 0 auto;">
+      <div style={`max-width: ${wide ? '1080px' : '680px'}; margin: 0 auto;`}>
         <slot />
       </div>
     </main>

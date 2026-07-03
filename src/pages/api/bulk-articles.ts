@@ -63,11 +63,13 @@ export const GET: APIRoute = async ({ request }) => {
       const raw = await fetch(file.download_url, { headers: ghHeaders(token) }).then(r => r.text());
       const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
       const yaml = match ? match[1] : '';
+      const rawDate = parseFrontmatterField(yaml, 'date');
+      const parsed = rawDate ? new Date(rawDate) : null;
       return {
         slug: file.name.replace(/\.mdx$/, ''),
         title: parseFrontmatterField(yaml, 'title') ?? file.name,
         status: parseFrontmatterField(yaml, 'status') ?? 'draft',
-        date: parseFrontmatterField(yaml, 'date'),
+        date: parsed && !isNaN(parsed.valueOf()) ? parsed.toISOString().slice(0, 10) : rawDate,
         series: parseFrontmatterField(yaml, 'series'),
       };
     }),
