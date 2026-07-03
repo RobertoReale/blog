@@ -55,12 +55,20 @@ export const GET: APIRoute = async ({ request }) => {
   if (!listRes.ok) {
     return json({ error: `Failed to list articles (${listRes.status})` }, listRes.status);
   }
-  const files = (await listRes.json()) as Array<{ name: string; download_url: string }>;
+  const files = (await listRes.json()) as Array<{ name: string }>;
   const mdxFiles = files.filter(f => f.name.endsWith('.mdx'));
 
   const articles = await Promise.all(
     mdxFiles.map(async (file) => {
-      const raw = await fetch(file.download_url, { headers: ghHeaders(token) }).then(r => r.text());
+      // Fetch content via the authenticated Contents API (not download_url) —
+      // raw.githubusercontent.com sits behind a CDN that can serve stale content
+      // for minutes after a commit, which made the list show old statuses.
+      const fileRes = await fetch(
+        `https://api.github.com/repos/${OWNER}/${REPO}/contents/${ARTICLES_DIR}/${file.name}?ref=${BRANCH}`,
+        { headers: ghHeaders(token) },
+      );
+      const fileData = (await fileRes.json()) as { content: string };
+      const raw = Buffer.from(fileData.content, 'base64').toString('utf-8');
       const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
       const yaml = match ? match[1] : '';
       const rawDate = parseFrontmatterField(yaml, 'date');
