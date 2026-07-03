@@ -4,92 +4,174 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Export Tags & Series">
-  <div style="max-width: 680px; margin: 0 auto;">
-    <a href="/admin" style="display: inline-block; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--color-muted); text-decoration: none; margin-bottom: 12px;">← Admin</a>
-    <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
-      Export Tags & Series
-    </h1>
-    <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); margin-bottom: 40px; font-size: 0.95rem;">
-      Download the current tags and series inventory as Markdown files.
-    </p>
+  <div class="export-page">
+    <a href="/admin" class="back-link">← Admin</a>
+    <h1>Export Tags & Series</h1>
+    <p class="intro">Download the current tags and series inventory as Markdown files.</p>
 
-    <div id="loading-msg" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.9rem;">
-      Loading...
-    </div>
+    <div id="loading-msg" class="loading-msg">Loading...</div>
 
-    <div id="content" style="display: none;">
+    <div id="content" class="content" style="display: none;">
       <!-- Tags card -->
-      <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+      <div class="card">
+        <div class="card-header">
           <div>
-            <h2 style="font-family: 'Lora', serif; font-size: 1.15rem; margin: 0 0 4px 0;">
-              existing-tags.md
-            </h2>
-            <p id="tags-meta" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.85rem; margin: 0;"></p>
+            <h2>existing-tags.md</h2>
+            <p id="tags-meta" class="card-meta"></p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button
-              id="copy-tags"
-              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text); cursor: pointer; transition: border-color 0.15s, color 0.15s;"
-              class="action-btn"
-            >
-              Copy
-            </button>
-            <button
-              id="download-tags"
-              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
-              class="action-btn-accent"
-            >
-              Download
-            </button>
+          <div class="card-actions">
+            <button id="copy-tags" class="action-btn">Copy</button>
+            <button id="download-tags" class="action-btn-accent">Download</button>
           </div>
         </div>
-        <pre id="tags-pre" style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; background: var(--color-origin-bg); border-radius: 6px; padding: 16px; overflow-x: auto; white-space: pre-wrap; margin: 0; color: var(--color-text); max-height: 220px; overflow-y: auto; line-height: 1.6;"></pre>
+        <pre id="tags-pre" class="card-pre"></pre>
       </div>
 
       <!-- Series card -->
-      <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+      <div class="card card--last">
+        <div class="card-header">
           <div>
-            <h2 style="font-family: 'Lora', serif; font-size: 1.15rem; margin: 0 0 4px 0;">
-              existing-series.md
-            </h2>
-            <p id="series-meta" style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); font-size: 0.85rem; margin: 0;"></p>
+            <h2>existing-series.md</h2>
+            <p id="series-meta" class="card-meta"></p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button
-              id="copy-series"
-              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-border); background: transparent; color: var(--color-text); cursor: pointer; transition: border-color 0.15s, color 0.15s;"
-              class="action-btn"
-            >
-              Copy
-            </button>
-            <button
-              id="download-series"
-              style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
-              class="action-btn-accent"
-            >
-              Download
-            </button>
+          <div class="card-actions">
+            <button id="copy-series" class="action-btn">Copy</button>
+            <button id="download-series" class="action-btn-accent">Download</button>
           </div>
         </div>
-        <pre id="series-pre" style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; background: var(--color-origin-bg); border-radius: 6px; padding: 16px; overflow-x: auto; white-space: pre-wrap; margin: 0; color: var(--color-text); max-height: 220px; overflow-y: auto; line-height: 1.6;"></pre>
+        <pre id="series-pre" class="card-pre"></pre>
       </div>
 
-      <p style="font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--color-muted); text-align: center;">
-        Data is generated live from <code style="font-size: 0.75rem;">src/content/articles/</code> — always up to date.
+      <p class="footnote">
+        Data is generated live from <code>src/content/articles/</code> — always up to date.
       </p>
     </div>
   </div>
 </BaseLayout>
 
 <style>
+  .export-page {
+    max-width: 680px;
+    margin: 0 auto;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    margin-bottom: 12px;
+  }
+
+  .export-page h1 {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    margin: 0 0 8px 0;
+  }
+
+  .intro {
+    color: var(--color-muted);
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+  }
+
+  .loading-msg {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+  }
+
+  .card {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .card--last {
+    margin-bottom: 40px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .card-header h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.15rem;
+    margin: 0 0 4px 0;
+  }
+
+  .card-meta {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn,
+  .action-btn-accent {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .action-btn {
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .action-btn-accent {
+    border: 1px solid var(--color-accent);
+    color: var(--color-accent);
+    transition: opacity 0.15s;
+  }
+
   .action-btn:hover {
     border-color: var(--color-accent) !important;
     color: var(--color-accent) !important;
   }
   .action-btn-accent:hover {
     opacity: 0.7;
+  }
+
+  .card-pre {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    background: var(--color-origin-bg);
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    margin: 0;
+    color: var(--color-text);
+    max-height: 220px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+
+  .footnote {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  .footnote code {
+    font-size: 0.75rem;
   }
 </style>
 
@@ -138,6 +220,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       if (res.status === 401) {
         localStorage.removeItem('adminToken');
         loadingMsg.textContent = 'Invalid token. Reload the page to try again.';
+        return;
+      }
+      if (res.status === 429) {
+        loadingMsg.textContent = 'Too many requests. Wait a moment and reload.';
         return;
       }
       const data = await res.json();

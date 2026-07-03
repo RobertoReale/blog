@@ -4,175 +4,361 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Import Article">
-  <div style="max-width: 680px; margin: 0 auto;">
-    <a href="/admin" style="display: inline-block; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--color-muted); text-decoration: none; margin-bottom: 12px;">← Admin</a>
-    <h1 style="font-family: 'Lora', serif; font-size: 2rem; margin-bottom: 8px; margin-top: 0;">
-      Import Article
-    </h1>
-    <p style="font-family: 'DM Sans', sans-serif; color: var(--color-muted); margin-bottom: 32px; font-size: 0.95rem;">
-      Paste the MDX content or select multiple files to publish directly to the repository.
-    </p>
+  <div class="import-page">
+    <a href="/admin" class="back-link">← Admin</a>
+    <h1>Import Article</h1>
+    <p class="intro">Paste the MDX content or select multiple files to publish directly to the repository.</p>
 
     <!-- MDX input -->
-    <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
+    <div class="card">
       <!-- File upload area -->
-      <div style="margin-bottom: 20px; border: 2px dashed var(--color-border); border-radius: 8px; padding: 20px; text-align: center; background: var(--color-origin-bg); transition: border-color 0.15s;" id="drop-zone">
+      <div class="drop-zone" id="drop-zone">
         <input
           id="file-input"
           type="file"
           accept=".mdx,.md"
           multiple
-          style="display: none;"
+          class="visually-hidden-input"
         />
-        <label
-          for="file-input"
-          style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--color-accent); cursor: pointer; font-weight: 500; display: block;"
-        >
-          Drag one or more .mdx files here or <span style="text-decoration: underline;">click to upload</span>
+        <label for="file-input" class="drop-zone-label">
+          Drag one or more .mdx files here or <span class="underline">click to upload</span>
         </label>
       </div>
 
-      <label
-        for="mdx-input"
-        style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;"
-      >
+      <label for="mdx-input" class="field-label">
         Or paste the MDX content below
       </label>
       <textarea
         id="mdx-input"
         rows="18"
         placeholder="---&#10;title: My Article&#10;date: 2025-01-01&#10;tags: [tag1, tag2]&#10;status: published&#10;description: ...&#10;---&#10;&#10;Article body here..."
-        style="width: 100%; box-sizing: border-box; font-family: 'DM Mono', 'Courier New', monospace; font-size: 0.78rem; line-height: 1.6; padding: 14px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-origin-bg); color: var(--color-text); resize: vertical; outline: none;"
+        class="mdx-textarea"
       ></textarea>
     </div>
 
     <!-- Multi-file list and publish (shown when multiple files are selected) -->
-    <div id="multi-file-section" style="display: none; border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
-      <h2 style="font-family: 'Lora', serif; font-size: 1.25rem; margin: 0 0 16px 0;">Articles ready for import</h2>
-      <div id="multi-file-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+    <div id="multi-file-section" class="card" style="display: none;">
+      <h2 class="section-title">Articles ready for import</h2>
+      <div id="multi-file-list" class="multi-file-list">
         <!-- Dynamic list of items -->
       </div>
-      
+
       <!-- Global Status Toggle for multiple files -->
-      <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
-        <span style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;">
-          Publication status (for all files)
-        </span>
-        <div style="display: flex; gap: 8px;">
-          <button
-            id="multi-pill-published"
-            class="status-pill status-pill--active"
-            data-value="published"
-          >
+      <div class="status-toggle-block">
+        <span class="field-label">Publication status (for all files)</span>
+        <div class="pill-row">
+          <button id="multi-pill-published" class="status-pill status-pill--active" data-value="published">
             Published
           </button>
-          <button
-            id="multi-pill-draft"
-            class="status-pill"
-            data-value="draft"
-          >
+          <button id="multi-pill-draft" class="status-pill" data-value="draft">
             Draft
           </button>
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <button
-          id="publish-all-btn"
-          style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
-        >
+      <div class="action-row">
+        <button id="publish-all-btn" class="publish-btn">
           Publish all to GitHub
         </button>
-        <span id="multi-status-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem;"></span>
+        <span id="multi-status-msg" class="status-msg"></span>
       </div>
     </div>
 
     <!-- Preview + publish (shown after parsing) -->
     <div id="preview-section" style="display: none;">
-      <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
-        <h2 style="font-family: 'Lora', serif; font-size: 1.1rem; margin: 0 0 16px 0;">Parsed frontmatter</h2>
-        <table id="meta-table" style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; border-collapse: collapse; width: 100%;"></table>
+      <div class="card">
+        <h2 class="section-title section-title--tight">Parsed frontmatter</h2>
+        <table id="meta-table" class="meta-table"></table>
       </div>
 
-      <div style="border: 1px solid var(--color-border); border-radius: 10px; padding: 24px; margin-bottom: 20px;">
+      <div class="card">
         <!-- Status toggle -->
-        <div style="margin-bottom: 20px;">
-          <span style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 10px;">
-            Status
-          </span>
-          <div style="display: flex; gap: 8px;">
-            <button
-              id="pill-published"
-              class="status-pill status-pill--active"
-              data-value="published"
-            >
+        <div class="status-toggle-block status-toggle-block--tight">
+          <span class="field-label">Status</span>
+          <div class="pill-row">
+            <button id="pill-published" class="status-pill status-pill--active" data-value="published">
               Published
             </button>
-            <button
-              id="pill-draft"
-              class="status-pill"
-              data-value="draft"
-            >
+            <button id="pill-draft" class="status-pill" data-value="draft">
               Draft
             </button>
           </div>
-          <p style="font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--color-muted); margin: 8px 0 0 0;">
-            Overrides the <code style="font-size: 0.75rem;">status</code> field in the frontmatter.
+          <p class="field-hint">
+            Overrides the <code>status</code> field in the frontmatter.
           </p>
         </div>
 
         <!-- Filename -->
-        <label
-          for="filename-input"
-          style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 8px;"
-        >
+        <label for="filename-input" class="field-label">
           Filename
         </label>
-        <input
-          id="filename-input"
-          type="text"
-          style="width: 100%; box-sizing: border-box; font-family: 'DM Mono', 'Courier New', monospace; font-size: 0.85rem; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-origin-bg); color: var(--color-text); outline: none;"
-        />
-        <p style="font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--color-muted); margin: 6px 0 0 0;">
-          Saved to <code style="font-size: 0.75rem;">src/content/articles/</code>. Lowercase, hyphens, ends in <code style="font-size: 0.75rem;">.mdx</code>.
+        <input id="filename-input" type="text" class="filename-input" />
+        <p class="field-hint">
+          Saved to <code>src/content/articles/</code>. Lowercase, hyphens, ends in <code>.mdx</code>.
         </p>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-        <button
-          id="publish-btn"
-          style="font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 24px; border-radius: 9999px; border: 1px solid var(--color-accent); background: transparent; color: var(--color-accent); cursor: pointer; transition: opacity 0.15s;"
-          class="publish-btn"
-        >
+      <div class="action-row action-row--publish">
+        <button id="publish-btn" class="publish-btn">
           Publish to GitHub
         </button>
-        <span id="status-msg" style="font-family: 'DM Sans', sans-serif; font-size: 0.88rem;"></span>
+        <span id="status-msg" class="status-msg"></span>
       </div>
 
-      <p style="font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--color-muted); margin: 8px 0 0 0;">
+      <p class="field-hint">
         After committing, Vercel will redeploy automatically (~1–2 min).
       </p>
     </div>
 
-    <div id="parse-error" style="display: none; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: #c0392b; padding: 12px 16px; border: 1px solid #c0392b; border-radius: 8px; margin-bottom: 20px;"></div>
+    <div id="parse-error" class="parse-error" style="display: none;"></div>
   </div>
 </BaseLayout>
 
 <style>
-  .publish-btn:hover { opacity: 0.7; }
-  #mdx-input:focus { border-color: var(--color-accent); }
-  #filename-input:focus { border-color: var(--color-accent); }
-  #meta-table td {
+  .import-page {
+    max-width: 680px;
+    margin: 0 auto;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    margin-bottom: 12px;
+  }
+
+  .import-page h1 {
+    font-family: 'Lora', serif;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    margin-top: 0;
+  }
+
+  .intro {
+    color: var(--color-muted);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+  }
+
+  .card {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .drop-zone {
+    margin-bottom: 20px;
+    border: 2px dashed var(--color-border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: var(--color-origin-bg);
+    transition: border-color 0.15s;
+  }
+
+  .visually-hidden-input {
+    display: none;
+  }
+
+  .drop-zone-label {
+    font-size: 0.88rem;
+    color: var(--color-accent);
+    cursor: pointer;
+    font-weight: 500;
+    display: block;
+  }
+
+  .underline {
+    text-decoration: underline;
+  }
+
+  .field-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .field-hint {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    margin: 8px 0 0 0;
+  }
+
+  .field-hint code {
+    font-size: 0.75rem;
+  }
+
+  .mdx-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    padding: 14px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-origin-bg);
+    color: var(--color-text);
+    resize: vertical;
+    outline: none;
+  }
+
+  .mdx-textarea:focus {
+    border-color: var(--color-accent);
+  }
+
+  .section-title {
+    font-family: 'Lora', serif;
+    font-size: 1.25rem;
+    margin: 0 0 16px 0;
+  }
+
+  .section-title--tight {
+    font-size: 1.1rem;
+  }
+
+  .multi-file-list {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .file-item {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-origin-bg);
+  }
+
+  .file-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .file-item-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    margin-top: 4px;
+  }
+
+  .file-item-status {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .file-item-status--pending {
+    color: var(--color-muted);
+  }
+
+  .file-item-status--uploading {
+    color: var(--color-accent);
+    font-weight: bold;
+  }
+
+  .file-item-status--success {
+    color: #27ae60;
+    font-weight: bold;
+  }
+
+  .file-item-status--error {
+    color: #c0392b;
+    font-weight: bold;
+  }
+
+  .status-toggle-block {
+    margin-bottom: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .status-toggle-block--tight {
+    margin-bottom: 20px;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .pill-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .action-row--publish {
+    margin-bottom: 8px;
+  }
+
+  .publish-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-accent);
+    background: transparent;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .publish-btn:hover {
+    opacity: 0.7;
+  }
+
+  .status-msg {
+    font-size: 0.88rem;
+  }
+
+  .meta-table {
+    font-size: 0.85rem;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .meta-table td {
     padding: 5px 12px 5px 0;
     vertical-align: top;
     color: var(--color-text);
   }
-  #meta-table td:first-child {
+
+  .meta-table td:first-child {
     color: var(--color-muted);
     white-space: nowrap;
     padding-right: 16px;
     font-size: 0.8rem;
   }
+
+  .filename-input {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-origin-bg);
+    color: var(--color-text);
+    outline: none;
+  }
+
+  .filename-input:focus {
+    border-color: var(--color-accent);
+  }
+
   .status-pill {
     font-family: 'DM Sans', sans-serif;
     font-size: 13px;
@@ -185,10 +371,20 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     cursor: pointer;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
+
   .status-pill--active {
     border-color: var(--color-accent);
     color: var(--color-accent);
     background: transparent;
+  }
+
+  .parse-error {
+    font-size: 0.85rem;
+    color: #c0392b;
+    padding: 12px 16px;
+    border: 1px solid #c0392b;
+    border-radius: 8px;
+    margin-bottom: 20px;
   }
 </style>
 
@@ -250,7 +446,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   function setChosenStatus(s: 'published' | 'draft') {
     chosenStatus = s;
-    
+
     // Update single-file pills
     pillPublished.classList.toggle('status-pill--active', s === 'published');
     pillDraft.classList.toggle('status-pill--active', s === 'draft');
@@ -334,22 +530,22 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   function renderMultiFileList() {
     multiFileList.innerHTML = selectedFiles.map((item) => {
       let statusBadge = '';
-      if (item.status === 'pending') statusBadge = '<span style="color: var(--color-muted);">Pending</span>';
-      else if (item.status === 'uploading') statusBadge = '<span style="color: var(--color-accent); font-weight: bold;">Uploading...</span>';
-      else if (item.status === 'success') statusBadge = '<span style="color: #27ae60; font-weight: bold;">Uploaded!</span>';
-      else if (item.status === 'error') statusBadge = `<span style="color: #c0392b; font-weight: bold;">Error: ${escapeHtml(item.error || 'Unknown')}</span>`;
+      if (item.status === 'pending') statusBadge = '<span class="file-item-status file-item-status--pending">Pending</span>';
+      else if (item.status === 'uploading') statusBadge = '<span class="file-item-status file-item-status--uploading">Uploading...</span>';
+      else if (item.status === 'success') statusBadge = '<span class="file-item-status file-item-status--success">Uploaded!</span>';
+      else if (item.status === 'error') statusBadge = `<span class="file-item-status file-item-status--error">Error: ${escapeHtml(item.error || 'Unknown')}</span>`;
 
       return `
-        <div style="border: 1px solid var(--color-border); border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; background: var(--color-origin-bg);">
+        <div class="file-item">
           <div>
-            <div style="font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;">
+            <div class="file-item-title">
               ${escapeHtml(item.parsed?.title || item.file.name)}
             </div>
-            <div style="font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--color-muted); margin-top: 4px;">
+            <div class="file-item-name">
               ${escapeHtml(item.name)}
             </div>
           </div>
-          <div style="font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;">
+          <div class="file-item-status">
             ${statusBadge}
           </div>
         </div>
@@ -403,7 +599,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         try {
           const content = await file.text();
           const parsed = parseFrontmatter(content);
-          
+
           const articleFile: ArticleFile = {
             file,
             name: file.name.replace(/\.md$/, '.mdx'),
@@ -411,7 +607,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             parsed,
             status: 'pending'
           };
-          
+
           if (!parsed || !parsed.title) {
             articleFile.status = 'error';
             articleFile.error = 'Invalid frontmatter or missing title';
@@ -429,7 +625,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         multiFileSection.style.display = 'none';
         return;
       }
-      
+
       renderMultiFileList();
     }
   }
@@ -523,6 +719,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         return;
       }
 
+      if (res.status === 429) {
+        statusMsg.style.color = '#c0392b';
+        statusMsg.textContent = 'Too many requests. Wait a moment and try again.';
+        publishBtn.disabled = false;
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -576,6 +779,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           localStorage.removeItem('adminToken');
           item.status = 'error';
           item.error = 'Invalid token';
+          renderMultiFileList();
+          break;
+        }
+
+        if (res.status === 429) {
+          item.status = 'error';
+          item.error = 'Rate limited — wait a moment';
           renderMultiFileList();
           break;
         }

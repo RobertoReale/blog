@@ -2,6 +2,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { timingSafeEqual } from 'node:crypto';
+import { checkRateLimit, getClientKey } from '../../utils/rateLimit';
 
 function json(body: object, status: number) {
   return new Response(JSON.stringify(body), {
@@ -95,7 +96,10 @@ function buildSeriesFile(sortedSeries: [string, { count: number; parts: { part: 
   return lines.join('\n');
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, clientAddress }) => {
+  const clientKey = getClientKey(request, clientAddress);
+  if (!checkRateLimit(clientKey)) return json({ error: 'Too many requests. Try again shortly.' }, 429);
+
   if (!checkToken(request)) return json({ error: 'Unauthorized' }, 401);
 
   const articles = await getCollection('articles');

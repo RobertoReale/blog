@@ -1,6 +1,7 @@
 export const prerender = false;
 import type { APIRoute } from 'astro';
 import { timingSafeEqual } from 'node:crypto';
+import { checkRateLimit, getClientKey } from '../../utils/rateLimit';
 
 const OWNER = 'RobertoReale';
 const REPO = 'blog';
@@ -17,7 +18,10 @@ function checkToken(request: Request): boolean {
   return timingSafeEqual(expectedBuf, providedBuf);
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
+  const clientKey = getClientKey(request, clientAddress);
+  if (!checkRateLimit(clientKey)) return json({ error: 'Too many requests. Try again shortly.' }, 429);
+
   if (!checkToken(request)) return json({ error: 'Unauthorized' }, 401);
 
   const token = import.meta.env.BLOG_GITHUB_TOKEN;

@@ -682,6 +682,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         loadingMsg.innerHTML = 'Invalid token. Reload the page to try again.';
         return;
       }
+      if (res.status === 429) {
+        loadingMsg.innerHTML = 'Too many requests. Wait a moment and reload.';
+        return;
+      }
       const data = await res.json();
       if (!res.ok) {
         loadingMsg.innerHTML = data.error ?? 'Error loading articles.';
@@ -757,6 +761,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         localStorage.removeItem('adminToken');
         toolbarMsg.style.color = '#c0392b';
         toolbarMsg.textContent = 'Invalid token.';
+        return;
+      }
+      if (res.status === 429) {
+        toolbarMsg.style.color = '#c0392b';
+        toolbarMsg.textContent = 'Too many requests. Wait a moment and try again.';
         return;
       }
       const data = await res.json();
