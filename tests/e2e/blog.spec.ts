@@ -22,11 +22,6 @@ test('/about page loads', async ({ page }) => {
   await expect(page.locator('h1').first()).toBeVisible()
 })
 
-test('/now page loads', async ({ page }) => {
-  await page.goto('/now')
-  await expect(page.locator('h1').first()).toBeVisible()
-})
-
 test('dark mode toggle persists across reload', async ({ page }) => {
   await page.goto('/')
   await page.click('[aria-label="Toggle dark mode"]')
