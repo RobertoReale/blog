@@ -22,25 +22,30 @@ const cls = active ? 'tag-pill tag-pill--active' : 'tag-pill';
 <style>
   .tag-pill {
     display: inline-block;
-    padding: 2px 10px;
+    padding: 3px 12px;
     border-radius: 9999px;
     font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 500;
     text-decoration: none;
-    background-color: var(--color-border);
+    background-color: var(--color-origin-bg);
+    border: 1px solid var(--color-border);
     color: var(--color-muted);
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   a.tag-pill:hover {
     background-color: var(--color-accent);
-    color: var(--color-bg);
+    border-color: var(--color-accent);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     text-decoration: none;
   }
 
   .tag-pill--active {
     background-color: var(--color-accent);
-    color: var(--color-bg);
+    border-color: var(--color-accent);
+    color: #FFFFFF;
   }
 </style>

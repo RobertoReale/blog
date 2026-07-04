@@ -22,10 +22,8 @@ const {
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const navColor = (href: string) =>
-  (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'))
-    ? 'var(--color-text)'
-    : 'var(--color-muted)';
+const isCurrent = (href: string) =>
+  href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
 
 const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
 ---
@@ -75,20 +73,20 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
     )}
   </head>
   <body>
-    <nav data-pagefind-ignore style="border-bottom: 1px solid var(--color-border);">
-      <div style="max-width: 680px; margin: 0 auto; padding: 0 24px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; height: 56px;">
-          <a href="/" style="font-family: 'Lora', serif; font-weight: 700; font-size: 1.15rem; color: var(--color-text); text-decoration: none; flex-shrink: 0;">
+    <nav class="site-nav" data-pagefind-ignore>
+      <div class="nav-container">
+        <div class="nav-bar">
+          <a href="/" class="logo-link">
             {SITE.title}
           </a>
-          <div style="display: flex; align-items: center; gap: 20px;">
+          <div class="nav-actions">
             <div class="nav-links-desktop">
-              <a href="/articles" style={`font-family: 'DM Sans', sans-serif; font-size: 15px; color: ${navColor('/articles')}; text-decoration: none;`}>Articles</a>
-              <a href="/series" style={`font-family: 'DM Sans', sans-serif; font-size: 15px; color: ${navColor('/series')}; text-decoration: none;`}>Series</a>
-              <a href="/about" style={`font-family: 'DM Sans', sans-serif; font-size: 15px; color: ${navColor('/about')}; text-decoration: none;`}>About</a>
-              <a href="/now" style={`font-family: 'DM Sans', sans-serif; font-size: 15px; color: ${navColor('/now')}; text-decoration: none;`}>Now</a>
-              <a href="https://robertoreale.github.io" style="font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-muted); text-decoration: none;">Portfolio</a>
-              <a href="/search" aria-label="Search" style={`display: flex; align-items: center; color: ${navColor('/search')}; line-height: 1;`}>
+              <a href="/articles" class={`nav-link ${isCurrent('/articles') ? 'nav-link--active' : ''}`}>Articles</a>
+              <a href="/series" class={`nav-link ${isCurrent('/series') ? 'nav-link--active' : ''}`}>Series</a>
+              <a href="/about" class={`nav-link ${isCurrent('/about') ? 'nav-link--active' : ''}`}>About</a>
+              <a href="/now" class={`nav-link ${isCurrent('/now') ? 'nav-link--active' : ''}`}>Now</a>
+              <a href="https://robertoreale.github.io" class="nav-link" target="_blank" rel="noopener noreferrer">Portfolio</a>
+              <a href="/search" aria-label="Search" class={`nav-search-btn ${isCurrent('/search') ? 'nav-link--active' : ''}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="8"></circle>
                   <path d="m21 21-4.35-4.35"></path>
@@ -119,30 +117,30 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
           </div>
         </div>
         <div id="nav-mobile-menu" class="nav-mobile-menu">
-          <a href="/articles" style={`color: ${navColor('/articles')};`}>Articles</a>
-          <a href="/series" style={`color: ${navColor('/series')};`}>Series</a>
-          <a href="/about" style={`color: ${navColor('/about')};`}>About</a>
-          <a href="/now" style={`color: ${navColor('/now')};`}>Now</a>
-          <a href="https://robertoreale.github.io" style="color: var(--color-muted);">Portfolio</a>
-          <a href="/search" style={`color: ${navColor('/search')};`}>Search</a>
+          <a href="/articles" class={`mobile-link ${isCurrent('/articles') ? 'mobile-link--active' : ''}`}>Articles</a>
+          <a href="/series" class={`mobile-link ${isCurrent('/series') ? 'mobile-link--active' : ''}`}>Series</a>
+          <a href="/about" class={`mobile-link ${isCurrent('/about') ? 'mobile-link--active' : ''}`}>About</a>
+          <a href="/now" class={`mobile-link ${isCurrent('/now') ? 'mobile-link--active' : ''}`}>Now</a>
+          <a href="https://robertoreale.github.io" class="mobile-link" target="_blank" rel="noopener noreferrer">Portfolio</a>
+          <a href="/search" class={`mobile-link ${isCurrent('/search') ? 'mobile-link--active' : ''}`}>Search</a>
         </div>
       </div>
     </nav>
     <main class="site-main">
-      <div style={`max-width: ${wide ? '1080px' : '680px'}; margin: 0 auto;`}>
+      <div class={wide ? "main-container main-container--wide" : "main-container"}>
         <slot />
       </div>
     </main>
-    <footer data-pagefind-ignore style="border-top: 1px solid var(--color-border); padding: 24px; text-align: center;">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px;">
-        <a href="/about" style="font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted); text-decoration: none;">About</a>
-        <a href="/now" style="font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted); text-decoration: none;">Now</a>
-        <a href="/rss.xml" aria-label="RSS feed" style="font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+    <footer class="site-footer" data-pagefind-ignore>
+      <div class="footer-links">
+        <a href="/about" class="footer-link">About</a>
+        <a href="/now" class="footer-link">Now</a>
+        <a href="/rss.xml" aria-label="RSS feed" class="footer-link footer-rss">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
           RSS
         </a>
       </div>
-      <p style="font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted); margin: 0;">
+      <p class="footer-copyright">
         © {new Date().getFullYear()} {SITE.author}
       </p>
     </footer>
@@ -188,5 +186,29 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
         });
       });
     </script>
+    <style>
+      .site-nav { border-bottom: 1px solid var(--color-border); transition: border-color 0.2s ease; }
+      .nav-container { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+      .nav-bar { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+      .logo-link { font-family: 'Lora', serif; font-weight: 700; font-size: 1.25rem; color: var(--color-text); text-decoration: none; flex-shrink: 0; letter-spacing: -0.01em; transition: color 0.15s ease; }
+      .logo-link:hover { color: var(--color-accent); text-decoration: none; }
+      .nav-actions { display: flex; align-items: center; gap: 20px; }
+      .nav-link { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; color: var(--color-muted); text-decoration: none; transition: color 0.15s ease; }
+      .nav-link:hover { color: var(--color-text); text-decoration: none; }
+      .nav-link--active { color: var(--color-text); font-weight: 600; }
+      .nav-search-btn { display: flex; align-items: center; color: var(--color-muted); line-height: 1; transition: color 0.15s ease; }
+      .nav-search-btn:hover, .nav-search-btn.nav-link--active { color: var(--color-text); }
+      .mobile-link { font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--color-muted); text-decoration: none; padding: 12px 0; border-bottom: 1px solid var(--color-border); transition: color 0.15s ease; }
+      .mobile-link:last-child { border-bottom: none; }
+      .mobile-link:hover, .mobile-link--active { color: var(--color-text); font-weight: 600; }
+      .main-container { max-width: 680px; margin: 0 auto; }
+      .main-container--wide { max-width: 1080px; }
+      .site-footer { border-top: 1px solid var(--color-border); padding: 36px 24px; text-align: center; margin-top: 40px; }
+      .footer-links { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 12px; }
+      .footer-link { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); text-decoration: none; transition: color 0.15s ease; }
+      .footer-link:hover { color: var(--color-accent); text-decoration: none; }
+      .footer-rss { display: inline-flex; align-items: center; gap: 6px; }
+      .footer-copyright { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--color-muted); margin: 0; }
+    </style>
   </body>
 </html>

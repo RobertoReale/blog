@@ -99,26 +99,26 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
     <div class="visually-hidden" data-pagefind-meta="title">{entry.data.title}</div>
     <div class="visually-hidden" data-pagefind-meta="description">{entry.data.description}</div>
     <div class="visually-hidden" data-pagefind-meta="date">{formatDate(entry.data.date)}</div>
-    <header style="margin-bottom: 40px;">
-      <h1 style="font-family: 'Lora', serif; font-size: 2rem; line-height: 1.3; margin-bottom: 16px; margin-top: 0;">
+    <header class="article-header">
+      <h1 class="article-main-title">
         {entry.data.title}
       </h1>
-      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px;">
-        <span style="font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-muted);">
+      <div class="article-meta-bar">
+        <span class="meta-item">
           {formatDate(entry.data.date)}
         </span>
-        <span style="color: var(--color-muted);">·</span>
-        <span style="font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-muted);">
+        <span class="meta-dot">·</span>
+        <span class="meta-item">
           {readingTime}
         </span>
       </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 6px;" data-pagefind-ignore>
+      <div class="article-tags-bar" data-pagefind-ignore>
         {entry.data.tags.map((tag: string) => (
           <TagPill tag={tag} href={`/tag/${tag}`} />
         ))}
       </div>
-      <div style="margin-top: 12px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-        <button id="share-btn" style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0;">
+      <div class="article-actions-bar">
+        <button id="share-btn" class="action-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
@@ -126,7 +126,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
           <span id="share-btn-text">Copy link</span>
         </button>
 
-        <a href={`/api/download/${entry.id}.mdx`} download={`${entry.id}.mdx`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0; text-decoration: none;">
+        <a href={`/api/download/${entry.id}.mdx`} download={`${entry.id}.mdx`} class="action-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
@@ -135,7 +135,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
           Download MDX
         </a>
 
-        <button id="cite-btn" data-citation={`${SITE.author}. (${new Date(entry.data.date).getFullYear()}). ${entry.data.title}. ${SITE.title}. ${SITE.url}/article/${entry.id}`} style="font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--color-muted); background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0;">
+        <button id="cite-btn" data-citation={`${SITE.author}. (${new Date(entry.data.date).getFullYear()}). ${entry.data.title}. ${SITE.title}. ${SITE.url}/article/${entry.id}`} class="action-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
@@ -229,3 +229,15 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
   </article>
   <RelatedArticles articles={related} />
 </ArticleLayout>
+
+<style>
+  .article-header { margin-bottom: 44px; border-bottom: 1px solid var(--color-border); padding-bottom: 28px; }
+  .article-main-title { font-family: 'Lora', serif; font-size: 2.25rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; margin-bottom: 16px; margin-top: 0; }
+  .article-meta-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .meta-item { font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--color-muted); }
+  .meta-dot { color: var(--color-border); font-size: 15px; }
+  .article-tags-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .article-actions-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .action-btn { font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; color: var(--color-muted); background-color: var(--color-origin-bg); border: 1px solid var(--color-border); border-radius: 6px; padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+  .action-btn:hover { border-color: var(--color-accent); color: var(--color-text); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); text-decoration: none; }
+</style>
