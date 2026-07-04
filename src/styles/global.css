@@ -180,6 +180,49 @@ main {
   font-size: inherit;
 }
 
+.code-snippet-wrapper {
+  position: relative;
+  margin: 1.75rem 0;
+}
+
+.code-snippet-wrapper pre {
+  margin: 0 !important;
+}
+
+.elegant-copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.elegant-copy-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.elegant-copy-btn.copied {
+  border-color: var(--color-accent);
+  color: #FFFFFF;
+  background-color: var(--color-accent);
+}
+
 .prose img {
   max-width: 100%;
   height: auto;

@@ -181,6 +181,41 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
         menu.querySelectorAll('a').forEach(link => {
           link.addEventListener('click', closeMenu);
         });
+
+        // Elegant Code Copy Snippets
+        document.querySelectorAll('.expressive-code .copy, .expressive-code .copy-btn, .ec-copy-btn').forEach(el => el.remove());
+        document.querySelectorAll('pre').forEach(pre => {
+          if (pre.parentNode.querySelector('.elegant-copy-btn')) return;
+          
+          let wrapper = pre.parentNode;
+          if (!wrapper.classList.contains('code-snippet-wrapper') && !wrapper.classList.contains('frame') && !wrapper.classList.contains('expressive-code')) {
+            wrapper = document.createElement('div');
+            wrapper.className = 'code-snippet-wrapper';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+          }
+          wrapper.style.position = 'relative';
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'elegant-copy-btn';
+          btn.setAttribute('aria-label', 'Copy code to clipboard');
+          btn.innerHTML = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="copy-text">Copy</span>`;
+
+          btn.addEventListener('click', () => {
+            const code = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+            navigator.clipboard.writeText(code).then(() => {
+              btn.classList.add('copied');
+              btn.innerHTML = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="copy-text">Copied!</span>`;
+              setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="copy-text">Copy</span>`;
+              }, 2000);
+            });
+          });
+
+          wrapper.appendChild(btn);
+        });
       });
     </script>
     <style>
