@@ -185,10 +185,10 @@ const pageTitle = title === SITE.title ? title : `${title} — ${SITE.title}`;
         // Elegant Code Copy Snippets
         document.querySelectorAll('.expressive-code .copy, .expressive-code .copy-btn, .ec-copy-btn').forEach(el => el.remove());
         document.querySelectorAll('pre').forEach(pre => {
-          if (pre.parentNode.querySelector('.elegant-copy-btn')) return;
+          if (pre.parentElement && pre.parentElement.classList.contains('code-snippet-wrapper') && pre.parentElement.querySelector('.elegant-copy-btn')) return;
           
-          let wrapper = pre.parentNode;
-          if (!wrapper.classList.contains('code-snippet-wrapper') && !wrapper.classList.contains('frame') && !wrapper.classList.contains('expressive-code')) {
+          let wrapper = pre.parentElement;
+          if (!wrapper || !wrapper.classList.contains('code-snippet-wrapper')) {
             wrapper = document.createElement('div');
             wrapper.className = 'code-snippet-wrapper';
             pre.parentNode.insertBefore(wrapper, pre);
