@@ -2,6 +2,7 @@
 export const prerender = true;
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ui/ArticleCard.astro';
+import NewsletterBox from '../components/ui/NewsletterBox.astro';
 import { getCollection } from 'astro:content';
 import { getReadingTime } from '../utils/readingTime';
 import { SITE } from '../config';
@@ -51,6 +52,8 @@ const canonicalURL = `${SITE.url}${Astro.url.pathname}`;
       </div>
     </div>
   )}
+
+  <NewsletterBox />
 </BaseLayout>
 
 <style>

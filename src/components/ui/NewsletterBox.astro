@@ -1,0 +1,217 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  actionUrl?: string;
+}
+
+const {
+  title = "Subscribe to the Newsletter",
+  description = "Get thoughtful essays on technology, economics, and quantitative finance delivered straight to your inbox. No spam, ever.",
+  actionUrl = "",
+} = Astro.props;
+---
+
+<div class="newsletter-box" data-pagefind-ignore>
+  <div class="newsletter-content">
+    <h3 class="newsletter-title">{title}</h3>
+    <p class="newsletter-description">{description}</p>
+    
+    <form id="newsletter-form" class="newsletter-form" action={actionUrl} method="POST" novalidate>
+      <div class="input-group">
+        <input
+          type="email"
+          id="newsletter-email"
+          name="email"
+          placeholder="Enter your email address..."
+          required
+          aria-label="Email address for newsletter"
+          class="newsletter-input"
+        />
+        <button type="submit" class="newsletter-btn group">
+          <span class="btn-text">Subscribe</span>
+          <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div id="newsletter-status" class="newsletter-status" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var form = document.getElementById('newsletter-form');
+    var emailInput = document.getElementById('newsletter-email');
+    var statusDiv = document.getElementById('newsletter-status');
+    var btn = form ? form.querySelector('button[type="submit"]') : null;
+    var btnText = btn ? btn.querySelector('.btn-text') : null;
+
+    if (!form || !emailInput || !statusDiv || !btn || !btnText) return;
+
+    form.addEventListener('submit', function(e) {
+      var action = form.getAttribute('action');
+      if (!action || action === '') {
+        e.preventDefault();
+        var email = emailInput.value.trim();
+        if (!email || email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+          statusDiv.textContent = 'Please enter a valid email address.';
+          statusDiv.className = 'newsletter-status error';
+          emailInput.focus();
+          return;
+        }
+
+        btn.disabled = true;
+        btn.classList.add('success');
+        btnText.textContent = 'Subscribed!';
+        emailInput.disabled = true;
+        statusDiv.textContent = 'Thank you for subscribing! We have added ' + email + ' to our list.';
+        statusDiv.className = 'newsletter-status success';
+      }
+    });
+  })();
+</script>
+
+<style>
+  .newsletter-box {
+    background-color: var(--color-origin-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 36px 32px;
+    margin: 48px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .newsletter-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981 0%, #059669 50%, #d97706 100%);
+    opacity: 0.85;
+  }
+  .newsletter-box:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  }
+  .newsletter-content {
+    max-width: 560px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .newsletter-title {
+    font-family: 'Lora', serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 12px 0;
+    letter-spacing: -0.01em;
+  }
+  .newsletter-description {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+  }
+  .newsletter-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .input-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+  .newsletter-input {
+    flex: 1 1 280px;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--color-text);
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .newsletter-input::placeholder {
+    color: var(--color-muted);
+    opacity: 0.7;
+  }
+  .newsletter-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+  .newsletter-btn {
+    background-color: var(--color-text);
+    color: var(--color-bg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+  }
+  .newsletter-btn:hover:not(:disabled) {
+    background-color: var(--color-accent);
+    color: #FFFFFF;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .newsletter-btn:disabled {
+    cursor: default;
+    opacity: 0.9;
+  }
+  .newsletter-btn.success {
+    background-color: var(--color-accent);
+    color: #FFFFFF;
+  }
+  .btn-icon {
+    transition: transform 0.2s ease;
+  }
+  .newsletter-btn:hover:not(:disabled) .btn-icon {
+    transform: translateX(3px);
+  }
+  .newsletter-status {
+    margin-top: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 20px;
+    transition: all 0.3s ease;
+  }
+  .newsletter-status.error {
+    color: #ef4444;
+  }
+  .newsletter-status.success {
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+  @media (max-width: 480px) {
+    .newsletter-box {
+      padding: 28px 20px;
+    }
+    .input-group {
+      flex-direction: column;
+    }
+    .newsletter-input, .newsletter-btn {
+      width: 100%;
+    }
+  }
+</style>

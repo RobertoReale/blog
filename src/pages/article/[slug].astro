@@ -6,6 +6,7 @@ import TagPill from '../../components/ui/TagPill.astro';
 import TOC from '../../components/ui/TOC.astro';
 import SeriesNav from '../../components/ui/SeriesNav.astro';
 import RelatedArticles from '../../components/ui/RelatedArticles.astro';
+import NewsletterBox from '../../components/ui/NewsletterBox.astro';
 import Sources from '../../components/mdx/Sources.astro';
 import Origin from '../../components/mdx/Origin.astro';
 import QA from '../../components/mdx/QA.astro';
@@ -227,6 +228,7 @@ const seriesSlug = entry.data.series ? slugify(entry.data.series) : '';
 
     <Sources sources={entry.data.sources ?? []} />
   </article>
+  <NewsletterBox />
   <RelatedArticles articles={related} />
 </ArticleLayout>
 
